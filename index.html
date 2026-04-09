@@ -195,6 +195,15 @@
         .incoterm-mode { color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }
         .action-buttons { display: flex; gap: 0.5rem; }
 
+        /* === SYNC BUTTON STYLES === */
+        @keyframes syncSpin { to { transform: rotate(360deg); } }
+        #headerSyncBtn.syncing #headerSyncIcon { animation: syncSpin 1s linear infinite; }
+        #headerSyncBtn.syncing { opacity: 0.8; pointer-events: none; }
+        #headerSyncBtn.sync-success { background: linear-gradient(135deg, #059669, #10b981) !important; box-shadow: 0 0 15px rgba(16,185,129,0.4); }
+        #headerSyncBtn.sync-error { background: linear-gradient(135deg, #dc2626, #ef4444) !important; }
+        #headerSyncBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        #headerSyncBtn { transition: all 0.3s ease; }
+
         /* === INLINE EDIT FEATURE === */
         .gantt-edit-btn { display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:0.6rem;font-weight:600;color:#2dd4bf;background:rgba(20,184,166,0.15);border:1px solid rgba(20,184,166,0.3);cursor:pointer;transition:all 0.2s;margin-top:3px;white-space:nowrap; }
         .gantt-edit-btn:hover { background:rgba(20,184,166,0.3);color:#fff; }
@@ -652,6 +661,12 @@
                 </div>
                 <div class="header-actions">
                     <select class="project-select" id="projectSelect" onchange="changeProject()"></select>
+                    <!-- Sync Google Sheets Button -->
+                    <button class="btn btn-secondary" id="headerSyncBtn" onclick="headerSyncFromSheets()" title="Sync data from Google Sheets" style="background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;position:relative;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="headerSyncIcon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span id="headerSyncLabel">Sync Sheets</span>
+                        <span id="headerSyncBadge" style="display:none;position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;background:#ef4444;color:white;border-radius:9px;font-size:0.6rem;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;"></span>
+                    </button>
                     <!-- Data Management Dropdown -->
                     <div class="data-dropdown">
                         <button class="btn btn-secondary" onclick="toggleDataDropdown()">
@@ -2372,6 +2387,58 @@ function forceRefreshFromSheets() {
     localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_KEY);
     localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
     fetchFromGoogleSheets();
+}
+
+// ─── HEADER SYNC BUTTON (Enhanced) ─────────────────────────
+
+async function headerSyncFromSheets() {
+    var btn = document.getElementById('headerSyncBtn');
+    var label = document.getElementById('headerSyncLabel');
+    var icon = document.getElementById('headerSyncIcon');
+    if (!btn || btn.classList.contains('syncing')) return;
+    
+    // Start syncing animation
+    btn.classList.add('syncing');
+    btn.classList.remove('sync-success', 'sync-error');
+    label.textContent = 'Syncing...';
+    
+    // Clear cache to force fresh fetch
+    localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_KEY);
+    localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
+    
+    try {
+        var success = await fetchFromGoogleSheets();
+        btn.classList.remove('syncing');
+        
+        if (success) {
+            btn.classList.add('sync-success');
+            var pkgCount = packages.length;
+            label.textContent = '\u2713 ' + pkgCount + ' pkgs';
+            showNotification('Google Sheets synced: ' + pkgCount + ' packages loaded', 'success');
+            
+            // Reset label after 5 seconds
+            setTimeout(function() {
+                label.textContent = 'Sync Sheets';
+                btn.classList.remove('sync-success');
+            }, 5000);
+        } else {
+            btn.classList.add('sync-error');
+            label.textContent = 'Sync Failed';
+            setTimeout(function() {
+                label.textContent = 'Sync Sheets';
+                btn.classList.remove('sync-error');
+            }, 5000);
+        }
+    } catch (err) {
+        btn.classList.remove('syncing');
+        btn.classList.add('sync-error');
+        label.textContent = 'Error';
+        console.error('[Header Sync] Error:', err);
+        setTimeout(function() {
+            label.textContent = 'Sync Sheets';
+            btn.classList.remove('sync-error');
+        }, 5000);
+    }
 }
         document.addEventListener('DOMContentLoaded', () => { initApp_withSync(); });
 
