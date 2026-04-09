@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Procurement Management System</title>
+    <title>Procurement Management System — Salak Unit 7</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -194,6 +194,35 @@
         .incoterm-desc { color: #94a3b8; font-size: 0.875rem; }
         .incoterm-mode { color: #64748b; font-size: 0.75rem; margin-top: 0.25rem; }
         .action-buttons { display: flex; gap: 0.5rem; }
+
+        /* === INLINE EDIT FEATURE === */
+        .gantt-edit-btn { display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:0.6rem;font-weight:600;color:#2dd4bf;background:rgba(20,184,166,0.15);border:1px solid rgba(20,184,166,0.3);cursor:pointer;transition:all 0.2s;margin-top:3px;white-space:nowrap; }
+        .gantt-edit-btn:hover { background:rgba(20,184,166,0.3);color:#fff; }
+        .gantt-edit-btn svg { width:10px;height:10px; }
+        .inline-edit-overlay { display:none;position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem; }
+        .inline-edit-overlay.active { display:flex; }
+        .inline-edit-panel { background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:16px;width:100%;max-width:640px;max-height:85vh;overflow:hidden;border:1px solid #334155;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); }
+        .inline-edit-header { display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid #334155;background:rgba(15,23,42,0.5); }
+        .inline-edit-header h3 { font-size:1rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:0.5rem; }
+        .inline-edit-header h3 .ie-badge { font-size:0.65rem;padding:2px 8px;border-radius:6px;font-weight:500; }
+        .inline-edit-body { padding:1.25rem;overflow-y:auto;max-height:calc(85vh - 130px); }
+        .ie-section { margin-bottom:1rem;padding:1rem;background:rgba(15,23,42,0.4);border-radius:12px;border:1px solid rgba(51,65,85,0.4); }
+        .ie-section-title { font-size:0.75rem;font-weight:600;color:#14b8a6;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.4rem; }
+        .ie-row { display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.5rem; }
+        .ie-field label { display:block;font-size:0.7rem;color:#64748b;margin-bottom:0.2rem;font-weight:500; }
+        .ie-field input,.ie-field select,.ie-field textarea { width:100%;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:0.45rem 0.6rem;color:white;font-size:0.8rem; }
+        .ie-field input:focus,.ie-field select:focus,.ie-field textarea:focus { outline:none;border-color:#14b8a6;box-shadow:0 0 0 2px rgba(20,184,166,0.2); }
+        .ie-field textarea { resize:vertical;min-height:50px; }
+        .ie-field.full { grid-column:span 2; }
+        .inline-edit-footer { padding:0.75rem 1.5rem;border-top:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:0.5rem; }
+        .ie-save-btn { padding:0.5rem 1.5rem;border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;border:none;background:linear-gradient(135deg,#0d9488,#06b6d4);color:white;box-shadow:0 4px 12px rgba(20,184,166,0.3);transition:all 0.2s; }
+        .ie-save-btn:hover { background:linear-gradient(135deg,#14b8a6,#22d3ee);transform:translateY(-1px); }
+        .ie-cancel-btn { padding:0.5rem 1rem;border-radius:10px;font-size:0.85rem;font-weight:500;cursor:pointer;border:1px solid #475569;background:transparent;color:#94a3b8; }
+        .ie-cancel-btn:hover { background:#334155;color:#fff; }
+        .ie-toast { position:fixed;bottom:2rem;right:2rem;padding:0.75rem 1.5rem;border-radius:12px;font-size:0.85rem;font-weight:500;z-index:400;transform:translateY(100px);opacity:0;transition:all 0.3s ease; }
+        .ie-toast.show { transform:translateY(0);opacity:1; }
+        .ie-toast.success { background:linear-gradient(135deg,#065f46,#064e3b);color:#34d399;border:1px solid rgba(16,185,129,0.3); }
+
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
         .page-title { font-size: 1.5rem; font-weight: 700; color: white; }
         .critical-item { background: rgba(15, 23, 42, 0.5); border-radius: 12px; padding: 1rem; border: 1px solid rgba(239, 68, 68, 0.2); margin-bottom: 0.75rem; transition: border-color 0.2s; }
@@ -1765,8 +1794,8 @@
                 console.log(`Loaded from Supabase: ${projects.length} projects, ${packages.length} packages, ${risks.length} risks`);
                 showNotification('Data loaded from cloud successfully!', 'success');
                 
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                // Save to localStorage as backup
+                saveAllData();
                 
                 return true;
                 
@@ -1796,13 +1825,6 @@
         const milestoneLabels = [{key:'issueRFQ',label:'Issue RFQ'},{key:'receiveQuotation',label:'Receive Quotation'},{key:'issueTBE',label:'Issue TBE'},{key:'issueCBE',label:'Issue CBE'},{key:'finalNegotiation',label:'Final Negotiation'},{key:'issuePO',label:'Issue PO'},{key:'kom',label:'KOM'}];
 
         // Storage Key Constants
-        // ===== GOOGLE APPS SCRIPT INTEGRATION =====
-const GAS_CONFIG = {
-    URL: 'https://script.google.com/macros/s/AKfycbzWzZpPFywBhKxaVhzSo63sBdjxXnytNw93iWwX38N5cAJHm2Q9Cc-brvcjU8Ofs8tipg/exec',
-    ENABLED: true,       // set false to fallback to localStorage
-    CACHE_MINUTES: 5     // cache duration before re-fetch
-};
-let gasLastFetch = 0;
         const STORAGE_KEYS = {
             PROJECTS: 'procurement_projects',
             PACKAGES: 'procurement_packages',
@@ -1812,7 +1834,7 @@ let gasLastFetch = 0;
             ACTIVITY_LOG: 'procurement_activity_log'
         };
 
-        const CURRENT_DATA_VERSION = '2026-04-07_140pkg_v3';
+        const CURRENT_DATA_VERSION = '2026-04-09_140pkg_v4_edit';
         (function checkDataVersion() {
             const storedVersion = localStorage.getItem('procurement_data_version');
             if (storedVersion !== CURRENT_DATA_VERSION) {
@@ -1841,8 +1863,8 @@ let gasLastFetch = 0;
 
         // ===== LOCAL STORAGE FUNCTIONS =====
         
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets {
+        // Save all data to localStorage
+        function saveAllData() {
             try {
                 localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
                 localStorage.setItem(STORAGE_KEYS.PACKAGES, JSON.stringify(packages));
@@ -1855,85 +1877,7 @@ let gasLastFetch = 0;
                 showNotification('Error saving data. Storage may be full.', 'error');
             }
         }
-// ===== GAS FETCH FUNCTIONS =====
 
-async function fetchFromGAS() {
-    if (!GAS_CONFIG.ENABLED) return false;
-    
-    try {
-        showNotification('Syncing with Google Sheets...', 'info');
-        const response = await fetch(GAS_CONFIG.URL + '?action=getAll');
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error('GAS Error:', data.error);
-            showNotification('Sync error: ' + data.error, 'error');
-            return false;
-        }
-        
-        // Update global variables
-        if (data.projects && data.projects.length > 0) projects = data.projects;
-        if (data.packages && data.packages.length > 0) packages = data.packages;
-        if (data.risks) risks = data.risks;
-        
-       
-            saveAllData();                    // existing localStorage save
-            saveToGAS(editedPackage);         // NEW: sync to Google Sheets
-        
-        showNotification('Data synced from Google Sheets (' + packages.length + ' packages)', 'success');
-        return true;
-    } catch(err) {
-        console.error('GAS fetch failed:', err);
-        showNotification('Offline mode — using cached data', 'warning');
-        return false;
-    }
-}
-
-async function saveToGAS(pkg) {
-    if (!GAS_CONFIG.ENABLED) return;
-    
-    try {
-        const payload = btoa(unescape(encodeURIComponent(JSON.stringify(pkg))));
-        const url = GAS_CONFIG.URL + '?action=updatePackage&data=' + payload;
-        
-        // Check URL length — GET limit ~2048 chars
-        if (url.length > 8000) {
-            console.warn('Payload too large for GET, saving to localStorage only');
-            showNotification('Package saved locally (too large for sync)', 'warning');
-            return;
-        }
-        
-        const response = await fetch(url);
-        const result = await response.json();
-        
-        if (result.success) {
-            showNotification('Saved to Google Sheets', 'success');
-            // Log activity
-            logActivityToGAS('update', pkg.packageName, 'Package updated via dashboard');
-        } else {
-            showNotification('Save error: ' + (result.error || 'Unknown'), 'error');
-        }
-    } catch(err) {
-        console.error('GAS save failed:', err);
-        showNotification('Saved locally — will sync later', 'warning');
-    }
-}
-
-async function logActivityToGAS(action, target, details) {
-    if (!GAS_CONFIG.ENABLED) return;
-    try {
-        const entry = {
-            id: Date.now(),
-            timestamp: new Date().toISOString(),
-            user: 'Dashboard',
-            action: action,
-            target: target,
-            details: details
-        };
-        const payload = btoa(unescape(encodeURIComponent(JSON.stringify(entry))));
-        fetch(GAS_CONFIG.URL + '?action=addActivityLog&data=' + payload);
-    } catch(e) { /* silent fail for logging */ }
-}
         // Load all data from localStorage
         function loadAllData() {
             try {
@@ -1952,8 +1896,7 @@ async function logActivityToGAS(action, target, details) {
 
                 // If this is first time (no data in storage), save defaults
                 if (!storedProjects) {
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                    saveAllData();
                 }
 
                 console.log('Data loaded from localStorage successfully');
@@ -2100,8 +2043,7 @@ async function logActivityToGAS(action, target, details) {
                 risks = [...defaultRisks];
                 weightFactors = JSON.parse(JSON.stringify(defaultWeightFactors));
                 selectedProject = 1;
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                saveAllData();
                 addActivityLog('reset', 'system', 'Data reset to defaults', defaultPackages.length + ' packages, ' + defaultRisks.length + ' risks');
                 populateSelects();
                 renderAll();
@@ -2115,8 +2057,7 @@ async function logActivityToGAS(action, target, details) {
                 projects = [];
                 packages = [];
                 risks = [];
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                saveAllData();
                 addActivityLog('delete', 'system', 'All data cleared');
                 populateSelects();
                 renderAll();
@@ -2185,19 +2126,13 @@ async function logActivityToGAS(action, target, details) {
 
         document.addEventListener('DOMContentLoaded', () => { initApp(); });
 
-        async function initApp() {
-    // Try loading from GAS first
-    loadAllData(); // Load localStorage as fallback first
-    
-    if (GAS_CONFIG.ENABLED) {
-        await fetchFromGAS();
-    }
-    
-    renderAll();
-    initCharts();
-    initCutoffDate();
-    switchTab('dashboard');
-}
+        function initApp() { 
+            loadAllData(); // Load data from localStorage first
+            populateSelects(); 
+            initCutoffDate(); // Initialize cut-off date to today
+            renderAll(); 
+            initCharts(); 
+        }
 
         function populateSelects() {
             document.getElementById('projectSelect').innerHTML = projects.map(p => '<option value="'+p.id+'"'+(p.id===selectedProject?' selected':'')+'>'+p.name+'</option>').join('');
@@ -2208,8 +2143,7 @@ async function logActivityToGAS(action, target, details) {
             // Ensure selectedProject is valid
             if(projects.length > 0 && !projects.find(p => p.id === selectedProject)) {
                 selectedProject = projects[0].id;
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                saveAllData();
             }
         }
 
@@ -2850,8 +2784,7 @@ async function logActivityToGAS(action, target, details) {
             // Add generated risks to the risks array
             risks.push(...generatedRisks);
             
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+            saveAllData();
             renderRisks();
             if (charts.riskPie) updateCharts();
             
@@ -3876,8 +3809,7 @@ async function logActivityToGAS(action, target, details) {
                 }
             };
             
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+            saveAllData();
             updateCharts();
             closeWeightFactorModal();
             showNotification('Weight factors saved successfully', 'success');
@@ -3916,8 +3848,7 @@ async function logActivityToGAS(action, target, details) {
             }
         }
         function switchFormTab(id) { document.querySelectorAll('.form-tab').forEach(t=>t.classList.remove('active')); event.target.classList.add('active'); document.querySelectorAll('.form-section').forEach(s=>s.classList.remove('active')); document.getElementById(id+'Section').classList.add('active'); }
-        function changeProject() { selectedProject = parseInt(document.getElementById('projectSelect').value);                 saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets; renderAll(); }
+        function changeProject() { selectedProject = parseInt(document.getElementById('projectSelect').value); saveAllData(); renderAll(); }
         function filterPackages() { renderPackagesTable(); }
         function updateIncotermInfo() { const c=document.getElementById('incoterm').value,i=incoterms.find(x=>x.code===c),d=document.getElementById('incotermInfo');if(i){d.style.display='block';d.innerHTML='<div class="incoterm-header"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'+i.name+'</div><p class="incoterm-desc">'+i.desc+'</p><p class="incoterm-mode">Mode: '+(i.mode==='all'?'All transport':'Sea only')+'</p>';}else{d.style.display='none';}}
         
@@ -4497,13 +4428,12 @@ async function logActivityToGAS(action, target, details) {
                 packages.push(pkg);
                 addActivityLog('create', 'package', pkg.packageName, pkg.discipline + ' / ' + pkg.area);
             }
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+            saveAllData();
             showNotification(id?'Package updated successfully':'Package added successfully','success');
             closePackageModal();
             renderAll(); 
         }
-        function saveProject() { const id=document.getElementById('projectId').value,proj={id:id?parseInt(id):Date.now(),name:document.getElementById('projName').value,owner:document.getElementById('projOwner').value,contractor:document.getElementById('projContractor').value,technologyProvider:document.getElementById('projTechProvider').value,contractType:document.getElementById('projContractType').value,contractPrice:parseInt(document.getElementById('projContractPrice').value)||0,paymentTerm:document.getElementById('projPaymentTerm').value,startDate:document.getElementById('projStartDate').value,finishDate:document.getElementById('projFinishDate').value,ldDelay:parseInt(document.getElementById('projLdDelay').value)||0,ldPerformance:parseInt(document.getElementById('projLdPerformance').value)||0,guaranteePower:parseInt(document.getElementById('projGuaranteePower').value)||0,scopeByOwner:document.getElementById('projScopeByOwner').value};if(id){const i=projects.findIndex(p=>p.id===parseInt(id));if(i!==-1)projects[i]=proj;addActivityLog('update','project',proj.name);}else{projects.push(proj);selectedProject=proj.id;addActivityLog('create','project',proj.name);}                saveAllData();saveToGAS(editedPackage);showNotification(id?'Project updated successfully':'Project added successfully','success');closeProjectModal();populateSelects();renderAll(); }
+        function saveProject() { const id=document.getElementById('projectId').value,proj={id:id?parseInt(id):Date.now(),name:document.getElementById('projName').value,owner:document.getElementById('projOwner').value,contractor:document.getElementById('projContractor').value,technologyProvider:document.getElementById('projTechProvider').value,contractType:document.getElementById('projContractType').value,contractPrice:parseInt(document.getElementById('projContractPrice').value)||0,paymentTerm:document.getElementById('projPaymentTerm').value,startDate:document.getElementById('projStartDate').value,finishDate:document.getElementById('projFinishDate').value,ldDelay:parseInt(document.getElementById('projLdDelay').value)||0,ldPerformance:parseInt(document.getElementById('projLdPerformance').value)||0,guaranteePower:parseInt(document.getElementById('projGuaranteePower').value)||0,scopeByOwner:document.getElementById('projScopeByOwner').value};if(id){const i=projects.findIndex(p=>p.id===parseInt(id));if(i!==-1)projects[i]=proj;addActivityLog('update','project',proj.name);}else{projects.push(proj);selectedProject=proj.id;addActivityLog('create','project',proj.name);}saveAllData();showNotification(id?'Project updated successfully':'Project added successfully','success');closeProjectModal();populateSelects();renderAll(); }
         function saveRisk() { 
             const id = document.getElementById('riskId').value;
             const prob = document.getElementById('riskProbability').value;
@@ -4537,8 +4467,7 @@ async function logActivityToGAS(action, target, details) {
                 addActivityLog('create', 'risk', risk.riskDescription.substring(0, 60), risk.category + ' / ' + risk.riskLevel);
             }
             
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+            saveAllData();
             showNotification(id ? 'Risk updated successfully' : 'Risk added successfully', 'success');
             closeRiskModal();
             renderAll(); 
@@ -4547,8 +4476,8 @@ async function logActivityToGAS(action, target, details) {
         function editPackage(id) { openPackageModal(id); }
         function editProject(id) { openProjectModal(id); }
         function editRisk(id) { openRiskModal(id); }
-        function deletePackage(id) { if(confirm('Delete this package?')){const pkg=packages.find(p=>p.id===id);packages=packages.filter(p=>p.id!==id);addActivityLog('delete','package',pkg?pkg.packageName:'Unknown');saveAllData(); saveToGAS(editedPackage);showNotification('Package deleted','success');renderAll();} }
-        function deleteRisk(id) { if(confirm('Delete this risk?')){const risk=risks.find(r=>r.id===id);risks=risks.filter(r=>r.id!==id);addActivityLog('delete','risk',risk?risk.riskDescription.substring(0,60):'Unknown');saveAllData();saveToGAS(editedPackage);showNotification('Risk deleted','success');renderAll();} }
+        function deletePackage(id) { if(confirm('Delete this package?')){const pkg=packages.find(p=>p.id===id);packages=packages.filter(p=>p.id!==id);addActivityLog('delete','package',pkg?pkg.packageName:'Unknown');saveAllData();showNotification('Package deleted','success');renderAll();} }
+        function deleteRisk(id) { if(confirm('Delete this risk?')){const risk=risks.find(r=>r.id===id);risks=risks.filter(r=>r.id!==id);addActivityLog('delete','risk',risk?risk.riskDescription.substring(0,60):'Unknown');saveAllData();showNotification('Risk deleted','success');renderAll();} }
         function deleteProject(id) { 
             if(confirm('Delete this project? All associated packages and risks will also be deleted.')){
                 packages=packages.filter(p=>p.projectId!==id);
@@ -4556,8 +4485,7 @@ async function logActivityToGAS(action, target, details) {
                 projects=projects.filter(p=>p.id!==id);
                 if(selectedProject===id && projects.length>0) selectedProject=projects[0].id;
                 else if(projects.length===0) selectedProject=null;
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                saveAllData();
                 showNotification('Project deleted','success');
                 populateSelects();
                 renderAll();
@@ -5047,7 +4975,26 @@ async function logActivityToGAS(action, target, details) {
             const rs = getProjectRisks();
             
             const w = window.open('', '_blank');
-            w.document.write('<!DOCTYPE html><html><head><title>' + (isRisk ? 'Risk Analysis' : 'Dashboard') + ' Report</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:Segoe UI,sans-serif;color:#1e293b;padding:20px}.header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #0f766e}.header h1{color:#0f766e;margin:0 0 10px;font-size:24px}.header h2{color:#334155;margin:0;font-size:16px;font-weight:normal}.meta{display:flex;justify-content:space-between;margin-bottom:20px;font-size:12px;color:#64748b}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px}.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:15px;text-align:center}.stat-val{font-size:28px;font-weight:700;color:#0f766e}.stat-lbl{font-size:12px;color:#64748b;margin-top:5px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#0f766e;color:white;padding:10px 8px;text-align:left}td{padding:8px;border-bottom:1px solid #e2e8f0}tr:nth-child(even){background:#f8fafc}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600}.badge-critical{background:#fef2f2;color:#dc2626}.badge-warning{background:#fffbeb;color:#d97706}.badge-success{background:#f0fdf4;color:#16a34a}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8}</style></head><body><div class="header"><h1>' + (isRisk ? 'Risk Analysis Report' : 'Procurement Dashboard Report') + '</h1><h2>' + (proj?.name || 'All Projects') + '</h2></div><div class="meta"><span>Generated: ' + new Date().toLocaleString('id-ID') + '</span><span>Owner: ' + (proj?.owner || '-') + '</span><span>Contractor: ' + (proj?.contractor || '-') + '</span></div>' + (isRisk ? '<div class="stats"><div class="stat"><div class="stat-val" style="color:#dc2626">' + rs.filter(r => r.riskLevel === 'Critical').length + '</div><div class="stat-lbl">Critical</div></div><div class="stat"><div class="stat-val" style="color:#d97706">' + rs.filter(r => r.riskLevel === 'Medium').length + '</div><div class="stat-lbl">Medium</div></div><div class="stat"><div class="stat-val" style="color:#16a34a">' + rs.filter(r => r.riskLevel === 'Low').length + '</div><div class="stat-lbl">Low</div></div><div class="stat"><div class="stat-val">' + rs.filter(r => r.status === 'Open').length + '</div><div class="stat-lbl">Open</div></div></div><table><thead><tr><th>Package</th><th>Category</th><th>Risk</th><th>Level</th><th>Status</th><th>Mitigation</th><th>Owner</th></tr></thead><tbody>' + rs.map(r => { const pkg = packages.find(p => p.id === r.packageId); return '<tr><td>' + (pkg?.packageName || '-') + '</td><td>' + r.category + '</td><td>' + r.riskDescription + '</td><td><span class="badge badge-' + (r.riskLevel === 'Critical' ? 'critical' : r.riskLevel === 'Medium' ? 'warning' : 'success') + '">' + r.riskLevel + '</span></td><td>' + r.status + '</td><td style="max-width:200px;font-size:10px;">' + r.mitigation + '</td><td>' + r.owner + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="stats"><div class="stat"><div class="stat-val">' + s.total + '</div><div class="stat-lbl">Total Packages</div></div><div class="stat"><div class="stat-val">' + s.poIssued + '</div><div class="stat-lbl">PO Issued</div></div><div class="stat"><div class="stat-val">' + s.criticalCount + '</div><div class="stat-lbl">Critical Items</div></div><div class="stat"><div class="stat-val">' + s.avgProgress + '%</div><div class="stat-lbl">Avg Progress</div></div></div><table><thead><tr><th>Package</th><th>Discipline</th><th>Vendor</th><th>COO</th><th>PO Status</th><th>Mfg Progress</th><th>Delivery</th></tr></thead><tbody>' + pkgs.map(p => '<tr><td><strong>' + p.packageName + '</strong><br><small>' + p.rfqNo + '</small></td><td>' + p.discipline + '</td><td>' + (p.vendorName || '-') + '</td><td>' + (p.coo || '-') + '</td><td>' + (p.milestones.issuePO.actual ? '<span class="badge badge-success">Issued</span>' : '<span class="badge badge-warning">Pending</span>') + '</td><td>' + p.manufacture.actualProgress + '%</td><td>' + (p.delivery.planDate || '-') + '</td></tr>').join('') + '</tbody></table>') + '<div class="footer"><p>Generated by Procurement Management System</p><p>Confidential - Internal Use Only</p></div></body></html>');
+            w.document.write('<!DOCTYPE html><html><head><title>' + (isRisk ? 'Risk Analysis' : 'Dashboard') + ' Report</title><style>@page{size:A4 landscape;margin:15mm}body{font-family:Segoe UI,sans-serif;color:#1e293b;padding:20px}.header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #0f766e}.header h1{color:#0f766e;margin:0 0 10px;font-size:24px}.header h2{color:#334155;margin:0;font-size:16px;font-weight:normal}.meta{display:flex;justify-content:space-between;margin-bottom:20px;font-size:12px;color:#64748b}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px}.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:15px;text-align:center}.stat-val{font-size:28px;font-weight:700;color:#0f766e}.stat-lbl{font-size:12px;color:#64748b;margin-top:5px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#0f766e;color:white;padding:10px 8px;text-align:left}td{padding:8px;border-bottom:1px solid #e2e8f0}tr:nth-child(even){background:#f8fafc}.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600}.badge-critical{background:#fef2f2;color:#dc2626}.badge-warning{background:#fffbeb;color:#d97706}.badge-success{background:#f0fdf4;color:#16a34a}.footer{margin-top:30px;padding-top:15px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8}</style></head><body><div class="header"><h1>' + (isRisk ? 'Risk Analysis Report' : 'Procurement Dashboard Report') + '</h1><h2>' + (proj?.name || 'All Projects') + '</h2></div><div class="meta"><span>Generated: ' + new Date().toLocaleString('id-ID') + '</span><span>Owner: ' + (proj?.owner || '-') + '</span><span>Contractor: ' + (proj?.contractor || '-') + '</span></div>' + (isRisk ? '<div class="stats"><div class="stat"><div class="stat-val" style="color:#dc2626">' + rs.filter(r => r.riskLevel === 'Critical').length + '</div><div class="stat-lbl">Critical</div></div><div class="stat"><div class="stat-val" style="color:#d97706">' + rs.filter(r => r.riskLevel === 'Medium').length + '</div><div class="stat-lbl">Medium</div></div><div class="stat"><div class="stat-val" style="color:#16a34a">' + rs.filter(r => r.riskLevel === 'Low').length + '</div><div class="stat-lbl">Low</div></div><div class="stat"><div class="stat-val">' + rs.filter(r => r.status === 'Open').length + '</div><div class="stat-lbl">Open</div></div></div><table><thead><tr><th>Package</th><th>Category</th><th>Risk</th><th>Level</th><th>Status</th><th>Mitigation</th><th>Owner</th></tr></thead><tbody>' + rs.map(r => { const pkg = packages.find(p => p.id === r.packageId); return '<tr><td>' + (pkg?.packageName || '-') + '</td><td>' + r.category + '</td><td>' + r.riskDescription + '</td><td><span class="badge badge-' + (r.riskLevel === 'Critical' ? 'critical' : r.riskLevel === 'Medium' ? 'warning' : 'success') + '">' + r.riskLevel + '</span></td><td>' + r.status + '</td><td style="max-width:200px;font-size:10px;">' + r.mitigation + '</td><td>' + r.owner + '</td></tr>'; }).join('') + '</tbody></table>' : '<div class="stats"><div class="stat"><div class="stat-val">' + s.total + '</div><div class="stat-lbl">Total Packages</div></div><div class="stat"><div class="stat-val">' + s.poIssued + '</div><div class="stat-lbl">PO Issued</div></div><div class="stat"><div class="stat-val">' + s.criticalCount + '</div><div class="stat-lbl">Critical Items</div></div><div class="stat"><div class="stat-val">' + s.avgProgress + '%</div><div class="stat-lbl">Avg Progress</div></div></div><table><thead><tr><th>Package</th><th>Discipline</th><th>Vendor</th><th>COO</th><th>PO Status</th><th>Mfg Progress</th><th>Delivery</th></tr></thead><tbody>' + pkgs.map(p => '<tr><td><strong>' + p.packageName + '</strong><br><small>' + p.rfqNo + '</small></td><td>' + p.discipline + '</td><td>' + (p.vendorName || '-') + '</td><td>' + (p.coo || '-') + '</td><td>' + (p.milestones.issuePO.actual ? '<span class="badge badge-success">Issued</span>' : '<span class="badge badge-warning">Pending</span>') + '</td><td>' + p.manufacture.actualProgress + '%</td><td>' + (p.delivery.planDate || '-') + '</td></tr>').join('') + '</tbody></table>') + '<div class="footer"><p>Generated by Procurement Management System</p><p>Confidential - Internal Use Only</p></div>
+    <!-- Inline Edit Modal -->
+    <div class="inline-edit-overlay" id="inlineEditOverlay">
+        <div class="inline-edit-panel">
+            <div class="inline-edit-header">
+                <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span id="ieTitle">Edit Package</span>
+                <span class="ie-badge" id="ieBadge" style="background:rgba(20,184,166,0.2);color:#2dd4bf;"></span></h3>
+                <button class="modal-close" onclick="closeInlineEdit()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="inline-edit-body" id="ieBody">
+            </div>
+            <div class="inline-edit-footer">
+                <button class="ie-cancel-btn" onclick="closeInlineEdit()">Cancel</button>
+                <button class="ie-save-btn" onclick="saveInlineEdit()">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+    <div class="ie-toast" id="ieToast"></div>
+</body></html>');
             w.document.close();
             w.focus();
             setTimeout(() => w.print(), 500);
@@ -6097,8 +6044,8 @@ async function logActivityToGAS(action, target, details) {
                     }
                 }
                 
-                saveAllData();                    // existing localStorage save
-                saveToGAS(editedPackage);         // NEW: sync to Google Sheets
+                // Save to localStorage
+                saveAllData();
                 
                 // Refresh UI
                 populateSelects();
@@ -6300,6 +6247,7 @@ async function logActivityToGAS(action, target, details) {
                             '<div style="font-size:0.6rem;color:'+barColor+';font-weight:700;white-space:nowrap;">'+pct+'%</div>' +
                         '</div>';
                     })() +
+                    '<button class="gantt-edit-btn" onclick="openInlineEdit('+pkg.id+',\'schedule\')" title="Edit delivery dates"><svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z\'/></svg>Edit</button>' +
                     '</div></div></td>';
                 
                 // Timeline cell: one merged cell spanning all months
@@ -6561,6 +6509,7 @@ async function logActivityToGAS(action, target, details) {
                     '<div style="min-width:0;">' +
                     '<div style="font-size:0.82rem;font-weight:600;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:0.2rem;" title="'+pkg.packageName+'">'+pkg.packageName+'</div>' +
                     '<div style="font-size:0.68rem;color:#94a3b8;">'+(pkg.discipline||'N/A')+' • '+(pkg.vendorName||'N/A')+'</div>' +
+                    '<button class="gantt-edit-btn" onclick="openInlineEdit('+pkg.id+',\'inquiry\')" title="Edit milestones"><svg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z\'/></svg>Edit</button>' +
                     '</div></div></td>';
                 
                 html += '<td colspan="'+months.length+'" style="padding:0;height:'+rowHeight+'px;border-bottom:1px solid #334155;background:'+bgColor+';position:relative;overflow:visible;">';
@@ -7017,6 +6966,123 @@ async function logActivityToGAS(action, target, details) {
             document.getElementById('ganttPrintTable').innerHTML = html;
         }
         
+
+        // ============== INLINE EDIT FEATURE ==============
+        let inlineEditPkgId = null;
+        let inlineEditMode = null;
+        
+        function openInlineEdit(pkgId, mode) {
+            const pkg = packages.find(p => p.id === pkgId);
+            if (!pkg) return;
+            inlineEditPkgId = pkgId;
+            inlineEditMode = mode;
+            const d = pkg.delivery || {};
+            const m = pkg.manufacture || {};
+            const ms = pkg.milestones || {};
+            document.getElementById('ieTitle').textContent = pkg.packageName;
+            document.getElementById('ieBadge').textContent = pkg.discipline + ' \u2022 ' + (pkg.vendorName || 'N/A');
+            let html = '';
+            if (mode === 'schedule') {
+                html += '<div class="ie-section"><div class="ie-section-title">\ud83d\udce6 Delivery Schedule</div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>Plan Delivery 100%</label><input type="date" id="ie_planDelivery100" value="'+(d.planDelivery100||'')+'"></div>';
+                html += '<div class="ie-field"><label>Actual Delivery 100%</label><input type="date" id="ie_actualDelivery100" value="'+(d.actualDelivery100||'')+'"></div></div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>Plan Material At Site</label><input type="date" id="ie_planMaterialAtSite100" value="'+(d.planMaterialAtSite100||'')+'"></div>';
+                html += '<div class="ie-field"><label>Actual Material At Site</label><input type="date" id="ie_actualMaterialAtSite100" value="'+(d.actualMaterialAtSite100||'')+'"></div></div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>Incoterm</label><select id="ie_incoterm"><option value="">-</option>';
+                ['EXW','FOB','FCA','DAP','DDP','CIF','CFR'].forEach(function(t){html+='<option value="'+t+'"'+(d.incoterm===t?' selected':'')+'>'+t+'</option>';});
+                html += '</select></div><div class="ie-field"><label>Delivery Location</label><input type="text" id="ie_deliveryLocation" value="'+((d.deliveryLocation||'').replace(/"/g,'&quot;'))+'"></div></div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>Shipping Status (%)</label><input type="number" min="0" max="100" id="ie_shippingStatus" value="'+(d.shippingStatus||0)+'"></div>';
+                html += '<div class="ie-field"><label>Material Received (%)</label><input type="number" min="0" max="100" id="ie_materialReceivedActual" value="'+(d.materialReceivedActual||0)+'"></div></div></div>';
+                html += '<div class="ie-section"><div class="ie-section-title">\ud83c\udfed FAT</div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>Plan FAT</label><input type="date" id="ie_planFAT" value="'+(m.planFAT||'')+'"></div>';
+                html += '<div class="ie-field"><label>Actual FAT</label><input type="date" id="ie_actualFAT" value="'+(m.actualFAT||'')+'"></div></div>';
+                html += '<div class="ie-row"><div class="ie-field"><label>FAT Result</label><select id="ie_fatResult"><option value="">-</option>';
+                ['Passed','Passed with Remarks','Failed','Pending'].forEach(function(r){html+='<option value="'+r+'"'+(m.fatResult===r?' selected':'')+'>'+r+'</option>';});
+                html += '</select></div><div class="ie-field"><label>MFG Progress (%)</label><input type="number" min="0" max="100" id="ie_mfgProgress" value="'+(m.actualProgress||0)+'"></div></div>';
+                html += '<div class="ie-field full"><label>FAT Remarks</label><textarea id="ie_fatRemarks">'+((m.fatRemarks||'').replace(/\\n/g,'\n'))+'</textarea></div>';
+                html += '<div class="ie-field full"><label>Delivery/MFG Remarks</label><textarea id="ie_deliveryRemarks">'+((m.remark||'').replace(/\\n/g,'\n'))+'</textarea></div></div>';
+            } else {
+                var milestoneLabels = {issueRFQ:'Issue RFQ',receiveQuotation:'Receive Quotation',issueTBE:'Issue TBE',issueCBE:'Issue CBE',finalNegotiation:'Final Negotiation',issuePO:'Issue PO',kom:'KOM'};
+                html += '<div class="ie-section"><div class="ie-section-title">\ud83d\udccb Procurement Milestones</div>';
+                Object.keys(milestoneLabels).forEach(function(key){
+                    var label = milestoneLabels[key];
+                    var plan = (ms[key] && ms[key].plan) || '';
+                    var actual = (ms[key] && ms[key].actual) || '';
+                    html += '<div class="ie-row"><div class="ie-field"><label>'+label+' (Plan)</label><input type="date" id="ie_ms_'+key+'_plan" value="'+plan+'"></div>';
+                    html += '<div class="ie-field"><label>'+label+' (Actual)</label><input type="date" id="ie_ms_'+key+'_actual" value="'+actual+'"></div></div>';
+                });
+                html += '</div>';
+            }
+            document.getElementById('ieBody').innerHTML = html;
+            document.getElementById('inlineEditOverlay').classList.add('active');
+        }
+        
+        function closeInlineEdit() {
+            document.getElementById('inlineEditOverlay').classList.remove('active');
+            inlineEditPkgId = null; inlineEditMode = null;
+        }
+        
+        function saveInlineEdit() {
+            var pkg = packages.find(function(p){return p.id === inlineEditPkgId;});
+            if (!pkg) return;
+            if (inlineEditMode === 'schedule') {
+                if (!pkg.delivery) pkg.delivery = {};
+                if (!pkg.manufacture) pkg.manufacture = {};
+                pkg.delivery.planDelivery100 = document.getElementById('ie_planDelivery100').value;
+                pkg.delivery.actualDelivery100 = document.getElementById('ie_actualDelivery100').value;
+                pkg.delivery.planMaterialAtSite100 = document.getElementById('ie_planMaterialAtSite100').value;
+                pkg.delivery.actualMaterialAtSite100 = document.getElementById('ie_actualMaterialAtSite100').value;
+                pkg.delivery.incoterm = document.getElementById('ie_incoterm').value;
+                pkg.delivery.deliveryLocation = document.getElementById('ie_deliveryLocation').value;
+                pkg.delivery.shippingStatus = parseInt(document.getElementById('ie_shippingStatus').value) || 0;
+                pkg.delivery.materialReceivedActual = parseInt(document.getElementById('ie_materialReceivedActual').value) || 0;
+                pkg.manufacture.planFAT = document.getElementById('ie_planFAT').value;
+                pkg.manufacture.actualFAT = document.getElementById('ie_actualFAT').value;
+                pkg.manufacture.fatResult = document.getElementById('ie_fatResult').value;
+                pkg.manufacture.fatRemarks = document.getElementById('ie_fatRemarks').value.replace(/\n/g, '\\n');
+                pkg.manufacture.actualProgress = parseInt(document.getElementById('ie_mfgProgress').value) || 0;
+                pkg.manufacture.remark = document.getElementById('ie_deliveryRemarks').value.replace(/\n/g, '\\n');
+            } else {
+                if (!pkg.milestones) pkg.milestones = {};
+                ['issueRFQ','receiveQuotation','issueTBE','issueCBE','finalNegotiation','issuePO','kom'].forEach(function(key){
+                    if (!pkg.milestones[key]) pkg.milestones[key] = {};
+                    pkg.milestones[key].plan = document.getElementById('ie_ms_'+key+'_plan').value;
+                    pkg.milestones[key].actual = document.getElementById('ie_ms_'+key+'_actual').value;
+                });
+            }
+            saveAllData();
+            addActivityLog('UPDATE', 'package', pkg.packageName, 'Inline edit (' + inlineEditMode + ')');
+            closeInlineEdit();
+            if (inlineEditMode === 'schedule') renderScheduleGantt(); else renderInquiryGantt();
+            renderAll();
+            showIeToast('\u2713 ' + pkg.packageName + ' updated');
+        }
+        
+        function showIeToast(msg) {
+            var t = document.getElementById('ieToast');
+            t.textContent = msg; t.className = 'ie-toast success show';
+            setTimeout(function(){ t.classList.remove('show'); }, 3000);
+        }
+        
 </script>
+
+    <!-- Inline Edit Modal -->
+    <div class="inline-edit-overlay" id="inlineEditOverlay">
+        <div class="inline-edit-panel">
+            <div class="inline-edit-header">
+                <h3><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span id="ieTitle">Edit Package</span>
+                <span class="ie-badge" id="ieBadge" style="background:rgba(20,184,166,0.2);color:#2dd4bf;"></span></h3>
+                <button class="modal-close" onclick="closeInlineEdit()"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <div class="inline-edit-body" id="ieBody">
+            </div>
+            <div class="inline-edit-footer">
+                <button class="ie-cancel-btn" onclick="closeInlineEdit()">Cancel</button>
+                <button class="ie-save-btn" onclick="saveInlineEdit()">💾 Save Changes</button>
+            </div>
+        </div>
+    </div>
+    <div class="ie-toast" id="ieToast"></div>
 </body>
 </html>
