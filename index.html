@@ -1891,7 +1891,7 @@
                 projects = storedProjects ? JSON.parse(storedProjects) : [...defaultProjects];
                 packages = storedPackages ? JSON.parse(storedPackages) : [...defaultPackages];
                 risks = storedRisks ? JSON.parse(storedRisks) : [...defaultRisks];
-                selectedProject = storedSelectedProject ? parseInt(storedSelectedProject) : 1;
+                selectedProject = storedSelectedProject ? parseInt(storedSelectedProject) : 1767154263681;
                 weightFactors = storedWeightFactors ? JSON.parse(storedWeightFactors) : JSON.parse(JSON.stringify(defaultWeightFactors));
 
                 // If this is first time (no data in storage), save defaults
@@ -1906,7 +1906,7 @@
                 projects = [...defaultProjects];
                 packages = [...defaultPackages];
                 risks = [...defaultRisks];
-                selectedProject = 1;
+                selectedProject = 1767154263681;
             }
         }
 
@@ -2042,7 +2042,7 @@
                 packages = [...defaultPackages];
                 risks = [...defaultRisks];
                 weightFactors = JSON.parse(JSON.stringify(defaultWeightFactors));
-                selectedProject = 1;
+                selectedProject = 1767154263681;
                 saveAllData();
                 addActivityLog('reset', 'system', 'Data reset to defaults', defaultPackages.length + ' packages, ' + defaultRisks.length + ' risks');
                 populateSelects();
@@ -7063,7 +7063,7 @@
             t.textContent = msg; t.className = 'ie-toast success show';
             setTimeout(function(){ t.classList.remove('show'); }, 3000);
         }
-       const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwaW4nQrpGs6LqfyS4Ui4g1IjWvny5sKR3toB4887j2UrAfRvv3yX6ZvYlaFmXdmlCCuA/exec'; 
+        
 </script>
 
     <!-- Inline Edit Modal -->
