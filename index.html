@@ -2123,8 +2123,257 @@
                 notif.style.transform = 'translateX(100%)';
             }, 3000);
         }
+// ============================================================
+// GOOGLE SHEETS SYNC MODULE
+// ============================================================
+// Tambahkan code ini SEBELUM function initApp() di dalam <script>
+// Ganti APPS_SCRIPT_URL dengan URL deployment Apps Script kamu
+// ============================================================
 
-        document.addEventListener('DOMContentLoaded', () => { initApp(); });
+// ─── KONFIGURASI GOOGLE SHEETS SYNC ────────────────────────
+const GOOGLE_SHEETS_SYNC = {
+    // ★★★ GANTI URL INI dengan URL deployment Apps Script kamu ★★★
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/PASTE_DEPLOYMENT_ID_DISINI/exec',
+    
+    // Aktifkan/nonaktifkan sync
+    ENABLED: true,
+    
+    // Auto-refresh interval (milliseconds). 0 = disable auto-refresh
+    AUTO_REFRESH_INTERVAL: 0,
+    
+    // Tampilkan notifikasi saat sync
+    SHOW_NOTIFICATIONS: true,
+    
+    // Fallback ke localStorage jika fetch gagal
+    FALLBACK_TO_LOCAL: true,
+    
+    // Cache duration (ms). Data dari Sheets di-cache di localStorage
+    CACHE_DURATION: 5 * 60 * 1000, // 5 menit
+    
+    // Cache key
+    CACHE_KEY: 'procurement_sheets_cache',
+    CACHE_TS_KEY: 'procurement_sheets_cache_ts'
+};
+
+// ─── SYNC STATUS INDICATOR ──────────────────────────────────
+
+function createSyncIndicator() {
+    // Cek apakah sudah ada
+    if (document.getElementById('syncIndicator')) return;
+    
+    var indicator = document.createElement('div');
+    indicator.id = 'syncIndicator';
+    indicator.innerHTML = ''
+        + '<style>'
+        + '#syncIndicator { position:fixed; bottom:20px; left:20px; z-index:9999; display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:12px; font-size:13px; font-weight:500; transition:all 0.3s ease; cursor:pointer; font-family:-apple-system,sans-serif; }'
+        + '#syncIndicator.idle { background:rgba(30,41,59,0.9); color:#94a3b8; border:1px solid #475569; }'
+        + '#syncIndicator.loading { background:rgba(20,184,166,0.15); color:#2dd4bf; border:1px solid rgba(20,184,166,0.4); }'
+        + '#syncIndicator.success { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); }'
+        + '#syncIndicator.error { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.4); }'
+        + '#syncIndicator .sync-dot { width:8px; height:8px; border-radius:50%; }'
+        + '#syncIndicator.idle .sync-dot { background:#64748b; }'
+        + '#syncIndicator.loading .sync-dot { background:#2dd4bf; animation:syncPulse 1s infinite; }'
+        + '#syncIndicator.success .sync-dot { background:#34d399; }'
+        + '#syncIndicator.error .sync-dot { background:#f87171; }'
+        + '@keyframes syncPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }'
+        + '#syncIndicator .sync-btn { margin-left:8px; padding:2px 8px; border-radius:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:inherit; font-size:11px; cursor:pointer; }'
+        + '#syncIndicator .sync-btn:hover { background:rgba(255,255,255,0.2); }'
+        + '</style>'
+        + '<span class="sync-dot"></span>'
+        + '<span class="sync-text">Google Sheets: Idle</span>'
+        + '<button class="sync-btn" onclick="event.stopPropagation();fetchFromGoogleSheets()">↻ Sync</button>';
+    indicator.className = 'idle';
+    indicator.title = 'Click to sync from Google Sheets';
+    indicator.onclick = function() { fetchFromGoogleSheets(); };
+    document.body.appendChild(indicator);
+}
+
+function updateSyncIndicator(status, message) {
+    var el = document.getElementById('syncIndicator');
+    if (!el) return;
+    el.className = status;
+    el.querySelector('.sync-text').textContent = message;
+}
+
+// ─── MAIN FETCH FUNCTION ────────────────────────────────────
+
+async function fetchFromGoogleSheets() {
+    if (!GOOGLE_SHEETS_SYNC.ENABLED) {
+        console.log('[Sheets Sync] Disabled');
+        return false;
+    }
+    
+    // Cek apakah URL sudah diisi
+    if (GOOGLE_SHEETS_SYNC.APPS_SCRIPT_URL.includes('PASTE_DEPLOYMENT_ID_DISINI')) {
+        console.warn('[Sheets Sync] Apps Script URL belum diisi!');
+        updateSyncIndicator('error', 'Sheets: URL not configured');
+        return false;
+    }
+    
+    // Cek cache
+    var cachedTs = localStorage.getItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
+    if (cachedTs && (Date.now() - parseInt(cachedTs)) < GOOGLE_SHEETS_SYNC.CACHE_DURATION) {
+        var cached = localStorage.getItem(GOOGLE_SHEETS_SYNC.CACHE_KEY);
+        if (cached) {
+            console.log('[Sheets Sync] Using cached data');
+            try {
+                var cachedData = JSON.parse(cached);
+                applySheetsData(cachedData);
+                updateSyncIndicator('success', 'Sheets: Cached (' + cachedData.counts.packages + ' pkgs)');
+                return true;
+            } catch(e) {
+                console.error('[Sheets Sync] Cache parse error:', e);
+            }
+        }
+    }
+    
+    updateSyncIndicator('loading', 'Sheets: Fetching...');
+    
+    try {
+        var url = GOOGLE_SHEETS_SYNC.APPS_SCRIPT_URL + '?action=getAll&t=' + Date.now();
+        
+        console.log('[Sheets Sync] Fetching from:', url);
+        
+        var response = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+        }
+        
+        var result = await response.json();
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        if (!result.data) {
+            throw new Error('No data in response');
+        }
+        
+        console.log('[Sheets Sync] Received:', result.counts);
+        
+        // Cache the result
+        localStorage.setItem(GOOGLE_SHEETS_SYNC.CACHE_KEY, JSON.stringify(result));
+        localStorage.setItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY, String(Date.now()));
+        
+        // Apply data
+        applySheetsData(result);
+        
+        var msg = 'Sheets: ✓ ' + result.counts.packages + ' pkgs, ' + result.counts.risks + ' risks';
+        updateSyncIndicator('success', msg);
+        
+        if (GOOGLE_SHEETS_SYNC.SHOW_NOTIFICATIONS) {
+            showNotification('Data loaded from Google Sheets (' + result.counts.packages + ' packages)', 'success');
+        }
+        
+        // Log activity
+        addActivityLog('import', 'system', 'Synced from Google Sheets', 
+            result.counts.packages + ' packages, ' + result.counts.risks + ' risks');
+        
+        return true;
+        
+    } catch (error) {
+        console.error('[Sheets Sync] Error:', error);
+        updateSyncIndicator('error', 'Sheets: ' + error.message.substring(0, 30));
+        
+        if (GOOGLE_SHEETS_SYNC.FALLBACK_TO_LOCAL) {
+            console.log('[Sheets Sync] Falling back to localStorage/defaults');
+            // Data sudah ada dari loadAllData() sebelumnya
+            if (GOOGLE_SHEETS_SYNC.SHOW_NOTIFICATIONS) {
+                showNotification('Sheets sync failed, using local data. Error: ' + error.message, 'error');
+            }
+        }
+        
+        return false;
+    }
+}
+
+// ─── APPLY DATA FROM SHEETS ─────────────────────────────────
+
+function applySheetsData(result) {
+    var d = result.data;
+    
+    // Apply projects
+    if (d.projects && d.projects.length > 0) {
+        projects = d.projects;
+    }
+    
+    // Apply packages (already in nested format from Apps Script)
+    if (d.packages && d.packages.length > 0) {
+        packages = d.packages;
+    }
+    
+    // Apply risks
+    if (d.risks && d.risks.length > 0) {
+        risks = d.risks;
+    }
+    
+    // Ensure selectedProject is valid
+    if (projects.length > 0) {
+        if (!projects.find(function(p) { return p.id === selectedProject; })) {
+            selectedProject = projects[0].id;
+        }
+    }
+    
+    // Save to localStorage as backup
+    saveAllData();
+    
+    // Refresh UI
+    populateSelects();
+    renderAll();
+    if (charts.discipline) {
+        try { updateCharts(); } catch(e) { console.warn('Chart update error:', e); }
+    }
+}
+
+// ─── MODIFIED initApp ───────────────────────────────────────
+// Ganti function initApp() yang lama dengan versi ini
+
+function initApp_withSync() {
+    // Step 1: Load from localStorage first (instant, no flicker)
+    loadAllData();
+    populateSelects();
+    initCutoffDate();
+    renderAll();
+    initCharts();
+    
+    // Step 2: Create sync indicator
+    createSyncIndicator();
+    
+    // Step 3: Attempt Google Sheets sync (async, non-blocking)
+    if (GOOGLE_SHEETS_SYNC.ENABLED) {
+        // Delay slightly to let UI render first
+        setTimeout(function() {
+            fetchFromGoogleSheets().then(function(success) {
+                if (success) {
+                    console.log('[Sheets Sync] Dashboard updated from Google Sheets');
+                }
+            });
+        }, 500);
+    }
+    
+    // Step 4: Setup auto-refresh if configured
+    if (GOOGLE_SHEETS_SYNC.AUTO_REFRESH_INTERVAL > 0) {
+        setInterval(function() {
+            // Clear cache to force fresh fetch
+            localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
+            fetchFromGoogleSheets();
+        }, GOOGLE_SHEETS_SYNC.AUTO_REFRESH_INTERVAL);
+    }
+}
+
+// ─── FORCE REFRESH (bypass cache) ───────────────────────────
+
+function forceRefreshFromSheets() {
+    localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_KEY);
+    localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
+    fetchFromGoogleSheets();
+}
+        document.addEventListener('DOMContentLoaded', () => { initApp_withSync(); });
 
         function initApp() { 
             loadAllData(); // Load data from localStorage first
