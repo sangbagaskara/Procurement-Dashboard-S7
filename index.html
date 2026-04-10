@@ -2148,7 +2148,7 @@
 // ─── KONFIGURASI GOOGLE SHEETS SYNC ────────────────────────
 const GOOGLE_SHEETS_SYNC = {
     // ★★★ GANTI URL INI dengan URL deployment Apps Script kamu ★★★
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby-23gHcmXZI8porbZniakJm2N4VeZNeKu4zArsxRkJxh4PXgMsmvuUQefA0pbocb12tA/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxFNDEQrEjEA6fj1YN8JPthI3TuZ5CDqktQB1Fn-OPNh8YaYTT8BQfL3xeHBRNbI_i14g/exec',
     
     // Aktifkan/nonaktifkan sync
     ENABLED: true,
@@ -2440,6 +2440,62 @@ async function headerSyncFromSheets() {
         }, 5000);
     }
 }
+
+// ─── WRITE TO GOOGLE SHEETS (2-Way Sync) ────────────────────
+
+async function pushToSheets(action, data) {
+    if (!GOOGLE_SHEETS_SYNC.ENABLED) return null;
+    if (GOOGLE_SHEETS_SYNC.APPS_SCRIPT_URL.includes('PASTE_DEPLOYMENT_ID_DISINI')) return null;
+    
+    try {
+        var response = await fetch(GOOGLE_SHEETS_SYNC.APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: action, data: data, id: data ? data.id : null }),
+            redirect: 'follow'
+        });
+        var result = await response.json();
+        if (result.error) {
+            console.error('[Sheets Write] Error:', result.error);
+            showNotification('Sheets write error: ' + result.error, 'error');
+            return null;
+        }
+        console.log('[Sheets Write] ' + action + ':', result.status);
+        localStorage.removeItem(GOOGLE_SHEETS_SYNC.CACHE_TS_KEY);
+        return result;
+    } catch (err) {
+        console.error('[Sheets Write] Network error:', err);
+        showNotification('Could not write to Sheets (offline?). Data saved locally.', 'error');
+        return null;
+    }
+}
+
+function afterPackageSave(pkg) {
+    pushToSheets('upsertPackage', pkg).then(function(result) {
+        if (result && result.status) {
+            updateSyncIndicator('success', 'Sheets: \u2713 Saved ' + (pkg.packageName || '').substring(0, 20));
+            setTimeout(function() { updateSyncIndicator('idle', 'Sheets: Ready'); }, 3000);
+        }
+    });
+}
+
+function afterPackageDelete(pkgId) {
+    pushToSheets('deletePackage', { id: pkgId }).then(function(result) {
+        if (result) {
+            updateSyncIndicator('success', 'Sheets: \u2713 Deleted');
+            setTimeout(function() { updateSyncIndicator('idle', 'Sheets: Ready'); }, 3000);
+        }
+    });
+}
+
+function afterRiskSave(risk) {
+    pushToSheets('upsertRisk', risk);
+}
+
+function afterProjectSave(proj) {
+    pushToSheets('upsertProject', proj);
+}
+
         document.addEventListener('DOMContentLoaded', () => { initApp_withSync(); });
 
         function initApp() { 
@@ -4747,9 +4803,11 @@ async function headerSyncFromSheets() {
             saveAllData();
             showNotification(id?'Package updated successfully':'Package added successfully','success');
             closePackageModal();
-            renderAll(); 
+            renderAll();
+            // Push to Google Sheets
+            afterPackageSave(pkg);
         }
-        function saveProject() { const id=document.getElementById('projectId').value,proj={id:id?parseInt(id):Date.now(),name:document.getElementById('projName').value,owner:document.getElementById('projOwner').value,contractor:document.getElementById('projContractor').value,technologyProvider:document.getElementById('projTechProvider').value,contractType:document.getElementById('projContractType').value,contractPrice:parseInt(document.getElementById('projContractPrice').value)||0,paymentTerm:document.getElementById('projPaymentTerm').value,startDate:document.getElementById('projStartDate').value,finishDate:document.getElementById('projFinishDate').value,ldDelay:parseInt(document.getElementById('projLdDelay').value)||0,ldPerformance:parseInt(document.getElementById('projLdPerformance').value)||0,guaranteePower:parseInt(document.getElementById('projGuaranteePower').value)||0,scopeByOwner:document.getElementById('projScopeByOwner').value};if(id){const i=projects.findIndex(p=>p.id===parseInt(id));if(i!==-1)projects[i]=proj;addActivityLog('update','project',proj.name);}else{projects.push(proj);selectedProject=proj.id;addActivityLog('create','project',proj.name);}saveAllData();showNotification(id?'Project updated successfully':'Project added successfully','success');closeProjectModal();populateSelects();renderAll(); }
+        function saveProject() { const id=document.getElementById('projectId').value,proj={id:id?parseInt(id):Date.now(),name:document.getElementById('projName').value,owner:document.getElementById('projOwner').value,contractor:document.getElementById('projContractor').value,technologyProvider:document.getElementById('projTechProvider').value,contractType:document.getElementById('projContractType').value,contractPrice:parseInt(document.getElementById('projContractPrice').value)||0,paymentTerm:document.getElementById('projPaymentTerm').value,startDate:document.getElementById('projStartDate').value,finishDate:document.getElementById('projFinishDate').value,ldDelay:parseInt(document.getElementById('projLdDelay').value)||0,ldPerformance:parseInt(document.getElementById('projLdPerformance').value)||0,guaranteePower:parseInt(document.getElementById('projGuaranteePower').value)||0,scopeByOwner:document.getElementById('projScopeByOwner').value};if(id){const i=projects.findIndex(p=>p.id===parseInt(id));if(i!==-1)projects[i]=proj;addActivityLog('update','project',proj.name);}else{projects.push(proj);selectedProject=proj.id;addActivityLog('create','project',proj.name);}saveAllData();showNotification(id?'Project updated successfully':'Project added successfully','success');closeProjectModal();populateSelects();renderAll();afterProjectSave(proj); }
         function saveRisk() { 
             const id = document.getElementById('riskId').value;
             const prob = document.getElementById('riskProbability').value;
@@ -4786,13 +4844,15 @@ async function headerSyncFromSheets() {
             saveAllData();
             showNotification(id ? 'Risk updated successfully' : 'Risk added successfully', 'success');
             closeRiskModal();
-            renderAll(); 
+            renderAll();
+            // Push to Google Sheets
+            afterRiskSave(risk);
         }
 
         function editPackage(id) { openPackageModal(id); }
         function editProject(id) { openProjectModal(id); }
         function editRisk(id) { openRiskModal(id); }
-        function deletePackage(id) { if(confirm('Delete this package?')){const pkg=packages.find(p=>p.id===id);packages=packages.filter(p=>p.id!==id);addActivityLog('delete','package',pkg?pkg.packageName:'Unknown');saveAllData();showNotification('Package deleted','success');renderAll();} }
+        function deletePackage(id) { if(confirm('Delete this package?')){const pkg=packages.find(p=>p.id===id);packages=packages.filter(p=>p.id!==id);addActivityLog('delete','package',pkg?pkg.packageName:'Unknown');saveAllData();showNotification('Package deleted','success');renderAll();afterPackageDelete(id);} }
         function deleteRisk(id) { if(confirm('Delete this risk?')){const risk=risks.find(r=>r.id===id);risks=risks.filter(r=>r.id!==id);addActivityLog('delete','risk',risk?risk.riskDescription.substring(0,60):'Unknown');saveAllData();showNotification('Risk deleted','success');renderAll();} }
         function deleteProject(id) { 
             if(confirm('Delete this project? All associated packages and risks will also be deleted.')){
@@ -7349,6 +7409,7 @@ async function headerSyncFromSheets() {
             }
             saveAllData();
             addActivityLog('UPDATE', 'package', pkg.packageName, 'Inline edit (' + inlineEditMode + ')');
+            afterPackageSave(pkg);
             closeInlineEdit();
             if (inlineEditMode === 'schedule') renderScheduleGantt(); else renderInquiryGantt();
             renderAll();
