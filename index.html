@@ -553,7 +553,265 @@
             .print-table-section-title { display: block !important; }
             .print-gantt-inline-legend { display: flex !important; }
         }
-    </style>
+    
+
+/* ===== DS6 DELIVERY SCHEDULE STYLES (scoped) ===== */
+#schedule {
+  
+  --bg:#F5F4F0;--surf:#FFF;--bdr:#E0DDD5;--bdr2:#C8C4BA;
+  --ink:#1A1916;--ink2:#4A4844;--ink3:#8A8780;
+  --gold:#B8A878;--goldlt:#EDE8D4;--golddk:#8A7A50;
+  --cfat:#6B5B3F;--cdel:#2D4A6A;--csite:#B8A878;
+  --cship:#D4C898;--cact:#1A1916;--cpo:#8A6A8A;--cfore:#B85A30;
+  --hdr:54px;--side:252px;--row:62px;--pkcol:218px;--infocol:114px;--mfgcol:82px;
+
+  --ds6-hdr:0px; /* no separate header in embedded mode */
+  font-family:'Segoe UI',Arial,sans-serif;
+  font-size:13px;
+  color:var(--ink);
+}
+#schedule .ds6-wrap {
+  background:var(--bg);
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--bdr);
+}
+
+
+
+
+/* TOPBAR */
+#ds6-tb{position:fixed;top:0;left:0;right:0;height:var(--hdr);z-index:300;
+  background:var(--ink);display:flex;align-items:center;gap:12px;padding:0 16px;
+  border-bottom:2px solid var(--gold)}
+.tb-logo{display:flex;align-items:center;gap:8px;border-right:1px solid #333;padding-right:12px}
+.tb-box{width:30px;height:30px;border:1.5px solid var(--gold);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--gold)}
+.tb-lt{line-height:1.2}
+.tb-lt .ln1{display:block;font-size:10px;font-weight:700;color:#fff}
+.tb-lt .ln2{display:block;font-size:10px;font-weight:700;color:var(--gold);text-decoration:none;font-style:normal}
+.tb-ti{flex:1;min-width:0}
+.tb-t1{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-t2{font-size:9.5px;color:var(--gold);letter-spacing:.07em;text-transform:uppercase;margin-top:1px}
+.tb-meta{font-size:10px;color:#888;text-align:right;white-space:nowrap}
+.tb-meta b{color:var(--gold)}
+.tb-btn{padding:5px 12px;border:1px solid var(--gold);background:transparent;color:var(--gold);
+  font-size:9.5px;font-weight:700;cursor:pointer;border-radius:3px;letter-spacing:.05em;
+  text-transform:uppercase;white-space:nowrap;transition:all .15s}
+.tb-btn:hover{background:var(--gold);color:var(--ink)}
+.tb-btn.sec{border-color:#555;color:#aaa}
+.tb-btn.sec:hover{background:#555;color:#fff}
+
+/* LAYOUT */
+#ds6-layout{display:flex;position:fixed;top:var(--hdr);left:0;right:0;bottom:0;overflow:hidden;height:calc(100vh - var(--hdr))}
+
+/* SIDEBAR */
+#ds6-sb{width:var(--side);flex-shrink:0;background:var(--surf);border-right:1px solid var(--bdr);
+  overflow-y:auto;overflow-x:hidden;padding:12px 10px}
+.s-sec{margin-bottom:15px}
+.s-lbl{font-size:9px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;
+  padding-bottom:5px;margin-bottom:6px;border-bottom:1px solid var(--bdr)}
+.chips{display:flex;flex-wrap:wrap;gap:3px}
+.chip{padding:3px 8px;border-radius:10px;font-size:10px;border:1px solid var(--bdr2);
+  cursor:pointer;color:var(--ink2);user-select:none;transition:all .12s}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.gon{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.lyr-list{display:flex;flex-direction:column;gap:3px}
+.lyr{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:4px;cursor:pointer;
+  font-size:11px;color:var(--ink2);border:1px solid transparent;user-select:none;transition:all .12s}
+.lyr.on{border-color:var(--bdr2);background:#F0EDE8;color:var(--ink)}
+.ldot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.lck{width:12px;height:12px;border-radius:2px;border:1.5px solid var(--bdr2);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:8.5px;margin-left:auto}
+.lyr.on .lck{background:var(--ink);border-color:var(--ink);color:#fff}
+.stat-list{display:flex;flex-direction:column;gap:3px}
+.srow{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 7px;border-radius:4px;background:#F0EDE8;font-size:10px}
+.sv{font-weight:700;font-size:13px}
+.srow.w{background:#F8EDEC}.srow.w .sv{color:#6A3A3A}
+select{width:100%;padding:5px 7px;font-size:11px;border:1px solid var(--bdr2);
+  border-radius:4px;background:var(--bg);color:var(--ink);cursor:pointer}
+
+/* RIGHT COLUMN */
+#ds6-rightCol{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+
+/* GANTT AREA: left-fixed + right-scroll */
+#ds6-ganttArea{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* LEFT FIXED PANE */
+#ds6-leftPane{
+  flex-shrink:0;display:flex;flex-direction:column;
+  width:calc(var(--pkcol) + var(--infocol) + var(--mfgcol));
+  border-right:2px solid var(--bdr2);
+  overflow:hidden;min-height:0;
+}
+#ds6-leftHead{
+  flex-shrink:0;height:46px;background:var(--ink);display:flex;
+  border-bottom:2px solid var(--gold);
+}
+.lhc{display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:.05em;
+  padding:0 6px;border-right:1px solid #333;flex-shrink:0}
+.lhc.ph{justify-content:flex-start;padding-left:9px;color:#fff;font-size:9.5px;
+  width:var(--pkcol);min-width:var(--pkcol)}
+.lhc.ih{width:var(--infocol);min-width:var(--infocol)}
+.lhc.mh{width:var(--mfgcol);min-width:var(--mfgcol)}
+/* LEFT body: synced scroll via JS — overflow-y hidden, height fills remaining */
+#ds6-leftBody{flex:1;overflow-y:hidden;overflow-x:hidden;min-height:0;display:flex;flex-direction:column}
+#ds6-leftRows{flex:1}
+
+/* RIGHT TIMELINE PANE */
+#ds6-timePane{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+#ds6-timeHead{
+  flex-shrink:0;height:46px;background:var(--ink);
+  overflow-x:hidden;
+  border-bottom:2px solid var(--gold);
+}
+#ds6-timeHeadInner{display:flex;position:relative}
+.thm{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:var(--gold);border-right:1px solid #2A2A28;
+  padding:2px 0;height:28px}
+#ds6-todayHdr{position:absolute;bottom:0;width:1.5px;background:var(--gold);z-index:8}
+#ds6-todayLbl{position:absolute;bottom:2px;font-size:7px;font-weight:700;
+  background:var(--gold);color:var(--ink);padding:1px 2px;border-radius:2px;white-space:nowrap;z-index:9}
+/* timeBody: ONLY scroll container — both axes */
+#ds6-timeBody{flex:1;overflow-x:auto;overflow-y:auto;min-height:0}
+#ds6-timeRows{position:relative;min-width:max-content}
+
+/* ROW wrapper — fixed height, no overflow */
+.g-row{display:flex;height:var(--row);border-bottom:1px solid var(--bdr);overflow:hidden}
+.g-row:nth-child(even) .c-pk,.g-row:nth-child(even) .c-in,.g-row:nth-child(even) .c-mf{background:#FAFAF8}
+.g-row:hover .c-pk,.g-row:hover .c-in,.g-row:hover .c-mf{background:#F0EDE8!important}
+.g-row.r-done{opacity:.62}
+
+/* LEFT CELLS */
+.c-pk{width:var(--pkcol);min-width:var(--pkcol);max-width:var(--pkcol);
+  padding:4px 7px;border-right:1px solid var(--bdr2);
+  display:flex;flex-direction:column;justify-content:center;flex-shrink:0;
+  background:var(--surf);overflow:hidden}
+.c-no{font-size:8px;color:var(--ink3);font-weight:700}
+.c-nm{font-size:10.5px;font-weight:700;color:var(--ink);line-height:1.2;margin:1px 0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-sub{font-size:8.5px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:1.5px 4px;border-radius:3px;font-size:7px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-top:1px}
+.bd-site{background:var(--ink);color:#fff}
+.bd-del{background:#E8E4DC;color:var(--ink);border:1px solid var(--bdr2)}
+.bd-ship{background:#F0E8D0;color:#6A5A30}
+.bd-mfg{background:#EAEAEA;color:var(--ink2)}
+.bd-late{background:#F0D8D8;color:#6A3A3A}
+.bd-pend{background:#EDEDED;color:#888}
+.bd-ponyi{background:#F5ECD8;color:#7A5A20;border:1px solid #D4B878}
+.bd-eng{background:#E8EDF5;color:#2D4A6A;border:1px solid #9AB0CC}
+
+.c-in{width:var(--infocol);min-width:var(--infocol);max-width:var(--infocol);
+  padding:3px 5px;border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;justify-content:center;
+  background:#FAFAF8;flex-shrink:0;gap:1px;overflow:hidden}
+.ir{display:flex;justify-content:space-between;font-size:8.5px}
+.ik{color:var(--ink3);font-weight:600}
+.iv{font-weight:600;color:var(--ink);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.c-mf{width:var(--mfgcol);min-width:var(--mfgcol);max-width:var(--mfgcol);
+  padding:3px 5px;border-right:1px solid var(--bdr);
+  display:flex;flex-direction:column;justify-content:center;
+  background:#FAFAF8;flex-shrink:0;overflow:hidden}
+.mn{display:flex;justify-content:space-between;font-size:8.5px;margin-bottom:2px}
+.mp{color:var(--ink3)}.ma{font-weight:700;color:var(--ink)}
+.pb{height:5px;background:var(--bdr);border-radius:2px;overflow:hidden;margin-bottom:2px}
+.pbf{height:100%;border-radius:2px}
+.ft{font-size:8px;color:var(--ink3);line-height:1.3}
+.ft-ok{color:#2D6A2D;font-weight:700}
+
+/* TIMELINE ROW — must be exact same height as .g-row */
+.t-row{height:var(--row);border-bottom:1px solid var(--bdr);position:relative;overflow:hidden}
+.t-row:nth-child(even){background:#FAFAF8}
+.t-inner{position:relative;height:var(--row)}
+/* Grid lines */
+.gl{position:absolute;top:0;bottom:0;border-right:1px solid var(--bdr);pointer-events:none}
+.tday{position:absolute;top:0;bottom:0;width:1.5px;background:var(--gold);z-index:8;pointer-events:none}
+/* Markers — milestone triangles only (no bars) */
+.mk{position:absolute;z-index:6;transform:translateX(-50%);cursor:default}
+.mk:hover{z-index:14}
+.mk-tri{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:9px solid currentColor}
+.mk-dot{width:10px;height:10px;border-radius:50%;background:currentColor;border:1.5px solid #fff}
+.mk-lbl{font-size:8.5px;font-weight:600;white-space:nowrap;color:var(--ink2);line-height:1.1;margin-top:0}
+.mk-pct{font-size:8px;font-weight:700;white-space:nowrap;line-height:1.1}
+/* Disc separator — fixed height so left & right pane rows stay pixel-aligned */
+.disc-sep{
+  padding:0 8px;height:28px;line-height:28px;
+  font-size:9px;font-weight:700;color:var(--gold);
+  text-transform:uppercase;letter-spacing:.1em;background:#F0EDE8;
+  border-bottom:1px solid var(--bdr2);border-top:2px solid var(--bdr2);
+  box-sizing:border-box;flex-shrink:0;
+}
+
+/* LEGEND */
+#ds6-legend{background:var(--surf);border-top:1px solid var(--bdr);
+  padding:7px 12px;display:flex;flex-wrap:wrap;gap:10px;font-size:9.5px;flex-shrink:0}
+.le{display:flex;align-items:center;gap:4px;color:var(--ink2)}
+.le-tri{width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:8px solid currentColor}
+.le-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.le-line{width:2px;height:12px;background:var(--gold);display:inline-block}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;
+  align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.mbox{background:var(--surf);border:1px solid var(--bdr2);border-radius:8px;
+  padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.mt{font-size:14px;font-weight:700;margin-bottom:3px}
+.ms{font-size:11px;color:var(--ink3);margin-bottom:14px;line-height:1.5}
+/* Import drop zone */
+.dz{border:2px dashed var(--bdr2);border-radius:6px;padding:24px;text-align:center;
+  cursor:pointer;color:var(--ink3);font-size:11px;transition:all .2s}
+.dz:hover,.dz.over{border-color:var(--gold);background:var(--goldlt);color:var(--ink)}
+.dzi{font-size:26px;margin-bottom:6px}
+.mlog{margin-top:11px;background:#F5F4F0;border-radius:4px;padding:8px;
+  font-size:10px;font-family:monospace;max-height:130px;overflow-y:auto;display:none;white-space:pre-wrap}
+.lok{color:#2D6A2D}.lerr{color:#6A3A3A}.linf{color:var(--ink3)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.bcn{padding:6px 15px;border:1px solid var(--bdr2);background:transparent;border-radius:4px;cursor:pointer;font-size:11px}
+.bim{padding:6px 15px;background:var(--ink);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:700}
+.bim:disabled{background:var(--bdr2);cursor:not-allowed}
+/* Edit grid */
+.e-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 13px;margin-bottom:14px}
+.e-grp{display:flex;flex-direction:column;gap:3px}
+.e-grp.full{grid-column:1/-1}
+.e-lbl{font-size:9px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.e-inp{padding:6px 8px;border:1px solid var(--bdr2);border-radius:4px;font-size:11px;color:var(--ink);background:var(--bg);width:100%}
+.e-inp:focus{outline:none;border-color:var(--gold)}
+.e-sep{grid-column:1/-1;padding:5px 0 1px;font-size:10px;font-weight:700;color:var(--gold);
+  border-top:1px solid var(--bdr);margin-top:3px;text-transform:uppercase;letter-spacing:.07em}
+
+/* TOOLTIP */
+#ds6-tip{position:fixed;background:var(--ink);color:#fff;padding:6px 10px;border-radius:4px;
+  font-size:10px;pointer-events:none;z-index:9999;max-width:280px;
+  border:1px solid var(--gold);line-height:1.5;display:none;white-space:pre-line}
+
+/* PRINT */
+@media print{
+  #ds6-tb,#ds6-sb,#ds6-legend,.modal-bg,#ds6-tip,#ds6-printModal{display:none!important}
+  #ds6-layout{position:static!important;overflow:visible!important}
+  #ds6-rightCol,#ds6-ganttArea,#ds6-leftPane,#ds6-timePane,#ds6-timeBody{overflow:visible!important}
+  @page{size:A3 landscape;margin:8mm}
+}
+/* Override layout for embedded mode */
+#ds6-layout{position:relative!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;
+  height:calc(100vh - 200px);min-height:500px;overflow:hidden}
+#ds6-tb{position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+  height:auto;padding:8px 12px;z-index:10}
+/* Modal fixes for embedded mode */
+#schedule .modal-bg{z-index:1000}
+#schedule .mbox{max-height:80vh}
+/* Print overrides */
+@media print {
+  #ds6-tb,.no-print{display:none!important}
+  #ds6-layout{position:static!important;overflow:visible!important;height:auto!important}
+  #ds6-rightCol,#ds6-ganttArea,#ds6-leftPane,#ds6-timePane,#ds6-timeBody{overflow:visible!important}
+}
+
+</style>
 </head>
 <body>
     <!-- PDF Loading Overlay -->
@@ -982,192 +1240,260 @@
 
         <!-- Schedule Tab -->
         <div id="schedule" class="tab-content">
-            <!-- Print-only header -->
-            <div class="print-header" style="display: none;">
-                <div class="print-report-label">PROCUREMENT SCHEDULE REPORT</div>
-                <div class="print-project-name" id="printProjectName"></div>
-                <div class="print-title">Delivery & Material Schedule</div>
-                <div class="print-meta">
-                    <div class="print-filters">
-                        <div class="print-filter-item">
-                            <span class="print-filter-label">Discipline:</span>
-                            <span id="printDisciplineFilter"></span>
-                        </div>
-                        <div class="print-filter-item">
-                            <span class="print-filter-label">Status:</span>
-                            <span id="printStatusFilter"></span>
-                        </div>
-                        <div class="print-filter-item">
-                            <span class="print-filter-label">View:</span>
-                            <span id="printViewFilter"></span>
-                        </div>
-                    </div>
-                    <div class="print-date" id="printGeneratedDate"></div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header no-print">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <h2 class="card-title">Delivery & Material Schedule</h2>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <button class="btn btn-secondary" onclick="exportSchedule()">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                Export
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Filters -->
-                    <div class="filter-bar no-print" style="margin-bottom: 1.5rem;">
-                        <div class="filter-group">
-                            <label style="color: #94a3b8; font-size: 0.875rem; margin-right: 0.5rem;">View:</label>
-                            <select class="filter-select" id="scheduleViewFilter" onchange="renderScheduleGantt()">
-                                <option value="all">View All</option>
-                                <option value="delivery">Delivery Date</option>
-                                <option value="material">On Site Date</option>
-                                <option value="fat">FAT Date</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label style="color: #94a3b8; font-size: 0.875rem; margin-right: 0.5rem;">Discipline:</label>
-                            <select class="filter-select" id="scheduleDisciplineFilter" onchange="renderScheduleGantt()">
-                                <option value="all">All Disciplines</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label style="color: #94a3b8; font-size: 0.875rem; margin-right: 0.5rem;">Status:</label>
-                            <select class="filter-select" id="scheduleStatusFilter" onchange="renderScheduleGantt()">
-                                <option value="all">All Status</option>
-                                <option value="upcoming">Upcoming</option>
-                                <option value="ongoing">Ongoing</option>
-                                <option value="delayed">Delayed</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                        </div>
-                        <div class="filter-group" style="margin-left: auto;">
-                            <button class="btn btn-secondary" onclick="printScheduleReport()" style="display: flex; align-items: center; gap: 0.5rem;">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 18px; height: 18px;">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                                </svg>
-                                Print Schedule Report
-                            </button>
-                        </div>
-                    </div>
+            <!-- DS6: Delivery & Material Schedule v6.2 (Embedded) -->
+            <div id="ds6-tip" style="position:fixed;background:#1A1916;color:#fff;padding:6px 10px;border-radius:4px;font-size:10px;pointer-events:none;z-index:9999;max-width:280px;border:1px solid #B8A878;line-height:1.5;display:none;white-space:pre-line"></div>
 
-                    <!-- Gantt Chart Container (visual - shown in both screen and print) -->
-                    <div id="ganttChartContainer" class="gantt-visual-chart" style="overflow-x: auto; overflow-y: auto; max-height: 600px;">
-                        <!-- Gantt chart will be rendered here -->
-                    </div>
-                    
-                    <!-- Print-only legend (under visual gantt) -->
-                    <div class="print-gantt-inline-legend" id="printGanttLegend">
-                        <div class="pgl-i"><span class="pgl-m" style="background:#0891b2;"></span><span>Plan Delivery</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:#0d9488;"></span><span>Actual Delivery</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:#7c3aed;"></span><span>Plan On Site</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:#9333ea;"></span><span>Actual On Site</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:#d97706;"></span><span>Plan FAT</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:#059669;"></span><span>Actual FAT</span></div>
-                        <div class="pgl-i"><span class="pgl-m" style="background:rgba(220,38,38,0.3);border:1px solid #dc2626;"></span><span>Delayed</span></div>
-                        <div class="pgl-i"><span style="color:#e65100;font-weight:700;">│</span><span>Today</span></div>
-                    </div>
-                    
-                    <!-- Print-only Schedule Detail Table (with repeating header) -->
-                    <div id="ganttPrintTable" class="gantt-print-table">
-                        <!-- Generated by printScheduleReport() -->
-                    </div>
+            <!-- IMPORT MODAL -->
+<div class="modal-bg" id="ds6-importModal">
+<div class="mbox">
+  <div class="mt">⬆ Import Package Data (.xlsx)</div>
+  <div class="ms">Export dari Procurement Dashboard → <b>Export All Data (.xlsx)</b><br>
+  Format: 4-sheet (Projects / Packages / Risks / Activity Log) — v14 HTML export.</div>
+  <div class="dz" id="ds6-dz" onclick="document.getElementById('ds6-fi').click()">
+    <div class="dzi">📂</div>
+    <div>Klik atau drag &amp; drop file .xlsx</div>
+    <div style="margin-top:3px;font-size:9px;color:var(--ink3)">Procurement Management System v14 export</div>
+  </div>
+  <input type="file" id="ds6-fi" accept=".xlsx,.xls" style="display:none">
+  <div class="mlog" id="ds6-mlog"></div>
+  <div class="mbtns">
+    <button class="bcn" onclick="ds6_closeImport()">Cancel</button>
+    <button class="bim" id="ds6-bim" disabled onclick="ds6_applyImport()">Apply Data</button>
+  </div>
+</div>
+</div>
 
-                    <!-- Legend -->
-                    <div class="schedule-legend" style="margin-top: 1.5rem; padding: 1rem; background: rgba(15, 23, 42, 0.5); border-radius: 12px;">
-                        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: 0.875rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #f59e0b;"></div>
-                                <span style="color: #94a3b8;">Plan FAT</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #10b981;"></div>
-                                <span style="color: #94a3b8;">Actual FAT</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #06b6d4;"></div>
-                                <span style="color: #94a3b8;">Plan Delivery</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #14b8a6;"></div>
-                                <span style="color: #94a3b8;">Actual Delivery</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #8b5cf6;"></div>
-                                <span style="color: #94a3b8;">Plan Material On Site</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 12px solid #a855f7;"></div>
-                                <span style="color: #94a3b8;">Actual Material On Site</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 20px; height: 8px; background: #ef4444; border-radius: 2px;"></div>
-                                <span style="color: #94a3b8;">Delayed (Bar)</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div style="width: 28px; height: 5px; background: linear-gradient(to right,#10b981 60%,#1e293b 60%); border-radius: 3px; border: 1px solid #334155;"></div>
-                                <span style="color: #94a3b8;">MFG Progress</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="ds6-editModal">
+<div class="mbox">
+  <div class="mt">✎ Edit Package</div>
+  <div class="ms" id="ds6-editSub"></div>
+  <div class="e-grid" id="ds6-editGrid"></div>
+  <div class="mbtns">
+    <button class="bcn" onclick="ds6_closeEdit()">Cancel</button>
+    <button class="bim" onclick="ds6_saveEdit()">Save Changes</button>
+  </div>
+</div>
+</div>
+
+<!-- PRINT SETTINGS MODAL -->
+<div class="modal-bg" id="ds6-printModal">
+<div class="mbox" style="width:560px">
+  <div class="mt">⎙ Print Settings</div>
+  <div class="ms">Atur range timeline & ukuran output sebelum print. Preview akan terbuka di tab baru.</div>
+  <div class="e-grid" style="grid-template-columns:1fr 1fr;gap:12px 16px">
+    <div class="e-sep">Timeline Range</div>
+    <div class="e-grp">
+      <label class="e-lbl">From (Bulan Mulai)</label>
+      <input class="e-inp" type="month" id="pr_from">
+    </div>
+    <div class="e-grp">
+      <label class="e-lbl">To (Bulan Akhir)</label>
+      <input class="e-inp" type="month" id="pr_to">
+    </div>
+    <div class="e-sep">Page &amp; Scale</div>
+    <div class="e-grp">
+      <label class="e-lbl">Paper Size</label>
+      <select class="e-inp" id="pr_paper">
+        <option value="A4">A4 Landscape</option>
+        <option value="A3">A3 Landscape</option>
+        <option value="A2">A2 Landscape</option>
+      </select>
+    </div>
+    <div class="e-grp">
+      <label class="e-lbl">Row Height</label>
+      <select class="e-inp" id="pr_rowh">
+        <option value="52">Normal (52px)</option>
+        <option value="62" selected>Large (62px)</option>
+        <option value="72">Extra Large (72px)</option>
+      </select>
+    </div>
+    <div class="e-grp">
+      <label class="e-lbl">Timeline Scale (px/day)</label>
+      <select class="e-inp" id="pr_scale">
+        <option value="3.5">Compact (3.5)</option>
+        <option value="4.5" selected>Normal (4.5)</option>
+        <option value="6.0">Wide (6.0)</option>
+        <option value="8.0">Extra Wide (8.0)</option>
+      </select>
+    </div>
+    <div class="e-grp">
+      <label class="e-lbl">Font Scale</label>
+      <select class="e-inp" id="pr_font">
+        <option value="1.0">Normal</option>
+        <option value="1.15" selected>Larger (+15%)</option>
+        <option value="1.3">Extra Large (+30%)</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-top:10px;padding:8px;background:#F5F4F0;border-radius:4px;font-size:10px;color:var(--ink3)" id="prPreviewInfo">—</div>
+  <div style="margin-top:6px;padding:6px 8px;background:#FFF8E0;border:1px solid #E8D888;border-radius:4px;font-size:9.5px;color:#5A4A10">
+    ⚠ <b>Penting:</b> Di Chrome Print Dialog, pastikan set <b>Layout: Landscape</b> dan <b>Paper size</b> sesuai pilihan di atas. Browser tidak otomatis mengikuti setting dari halaman web.
+  </div>
+  <div class="mbtns">
+    <button class="bcn" onclick="ds6_closePrint()">Cancel</button>
+    <button class="bcn" onclick="ds6_prAutoRange()">↻ Auto Range</button>
+    <button class="bim" onclick="ds6_execPrint()">⎙ Open Print Preview</button>
+  </div>
+</div>
+</div>
+
+            <!-- DS6 Embedded Header -->
+            <div id="ds6-tb" style="background:#1A1916;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px 8px 0 0;border-bottom:2px solid #B8A878">
+              <div style="display:flex;align-items:center;gap:8px;border-right:1px solid #333;padding-right:12px">
+                <div style="width:28px;height:28px;border:1.5px solid #B8A878;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#B8A878">JO</div>
+                <div style="line-height:1.2"><span style="display:block;font-size:9px;font-weight:700;color:#fff">TIMAS</span><span style="display:block;font-size:9px;font-weight:700;color:#B8A878">REKIND</span></div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Delivery &amp; Material Schedule — All Disciplines</div>
+                <div style="font-size:8.5px;color:#B8A878;letter-spacing:.07em;text-transform:uppercase;margin-top:1px">Salak Unit 7 Development &nbsp;|&nbsp; Star Energy Geothermal Salak</div>
+              </div>
+              <div style="font-size:10px;color:#888;text-align:right;white-space:nowrap">
+                <div>Cut-off : <b id="ds6-cutoff" style="color:#B8A878">—</b></div>
+                <div id="ds6-pkgCnt" style="margin-top:1px"><b style="color:#B8A878">—</b></div>
+              </div>
+              <button class="tb-btn sec" onclick="ds6_openImport()" style="padding:4px 10px;border:1px solid #555;background:transparent;color:#aaa;font-size:9px;font-weight:700;cursor:pointer;border-radius:3px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap">⬆ Import xlsx</button>
+              <button class="tb-btn" onclick="ds6_openPrint()" style="padding:4px 10px;border:1px solid #B8A878;background:transparent;color:#B8A878;font-size:9px;font-weight:700;cursor:pointer;border-radius:3px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap">⎙ Print</button>
             </div>
 
-            <!-- Schedule Statistics -->
+            <!-- DS6 Layout -->
+            <div class="ds6-wrap">
+<!-- LAYOUT -->
+<div id="ds6-layout">
+
+<!-- SIDEBAR -->
+<div id="ds6-sb">
+  <div class="s-sec">
+    <div class="s-lbl">Discipline</div>
+    <div class="chips" id="ds6-discChips">
+      <span class="chip gon" data-v="all">All</span>
+      <span class="chip" data-v="Mechanical">Mech.</span>
+      <span class="chip" data-v="Electrical">Elec.</span>
+      <span class="chip" data-v="Instrument">Inst.</span>
+      <span class="chip" data-v="Piping">Piping</span>
+      <span class="chip" data-v="Civil">Civil</span>
+    </div>
+  </div>
+  <div class="s-sec">
+    <div class="s-lbl">Display Layers <span style="font-weight:400;color:var(--ink3);font-size:8.5px">(multi-select)</span></div>
+    <div class="lyr-list" id="ds6-lyrList">
+      <div class="lyr on" data-l="fat"><span class="ldot" style="background:var(--cfat)"></span>FAT Date<span class="lck">✓</span></div>
+      <div class="lyr on" data-l="po"><span class="ldot" style="background:var(--cpo)"></span>PO Date<span class="lck">✓</span></div>
+      <div class="lyr on" data-l="del"><span class="ldot" style="background:var(--cdel)"></span>Plan Delivery (ETD)<span class="lck">✓</span></div>
+      <div class="lyr on" data-l="site"><span class="ldot" style="background:var(--csite)"></span>Plan @Site (ETA)<span class="lck">✓</span></div>
+      <div class="lyr on" data-l="actual"><span class="ldot" style="background:var(--cact);border:1px solid #888"></span>Actual Del / @Site<span class="lck">✓</span></div>
+      <div class="lyr on" data-l="forecast"><span class="ldot" style="background:var(--cfore)"></span>Forecast<span class="lck">✓</span></div>
+    </div>
+  </div>
+  <div class="s-sec">
+    <div class="s-lbl">Status <span style="font-weight:400;color:var(--ink3);font-size:8.5px">(multi-select)</span></div>
+    <div class="lyr-list" id="ds6-stList">
+      <div class="lyr on" data-s="ongoing" style="border-color:var(--gold-dk,#8A7A50)">
+        <span class="ldot" style="background:var(--gold);border:1px solid var(--golddk,#8A7A50)"></span>On Going
+        <span class="lck">✓</span>
+      </div>
+      <div class="lyr" data-s="onsite">
+        <span class="ldot" style="background:var(--ink)"></span>On Site
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="delivered">
+        <span class="ldot" style="background:#4A4844"></span>Delivered
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="shipping">
+        <span class="ldot" style="background:var(--cship)"></span>Shipping
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="mfg">
+        <span class="ldot" style="background:#AAAAAA;border:1px solid #888"></span>In Mfg
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="eng_process">
+        <span class="ldot" style="background:#9AB0CC;border:1px solid #2D4A6A"></span>Eng. Process
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="po_nyi">
+        <span class="ldot" style="background:#D4B878;border:1px solid #7A5A20"></span>PO n/y Issued
+        <span class="lck"></span>
+      </div>
+      <div class="lyr" data-s="late">
+        <span class="ldot" style="background:#6A3A3A"></span>Delayed
+        <span class="lck"></span>
+      </div>
+    </div>
+  </div>
+  <div class="s-sec">
+    <div class="s-lbl">Sort By</div>
+    <select id="ds6-sortSel" onchange="ds6_render()">
+      <option value="del">Plan Delivery Date</option>
+      <option value="site">Plan @Site Date</option>
+      <option value="disc">Discipline</option>
+      <option value="mfg">Mfg Progress ↓</option>
+      <option value="name">Package Name</option>
+    </select>
+  </div>
+  <div class="s-sec">
+    <div class="s-lbl">Summary</div>
+    <div class="stat-list" id="ds6-statList"></div>
+  </div>
+</div>
+
+<!-- RIGHT COLUMN -->
+<div id="ds6-rightCol">
+  <div id="ds6-ganttArea">
+
+    <!-- LEFT FIXED PANE -->
+    <div id="ds6-leftPane">
+      <div id="ds6-leftHead">
+        <div class="lhc ph">PACKAGE</div>
+        <div class="lhc ih">VENDOR / DATES</div>
+        <div class="lhc mh">MFG%</div>
+      </div>
+      <div id="ds6-leftBody">
+        <div id="ds6-leftRows"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT TIMELINE PANE -->
+    <div id="ds6-timePane">
+      <div id="ds6-timeHead">
+        <div id="ds6-timeHeadInner"></div>
+      </div>
+      <div id="ds6-timeBody">
+        <div id="ds6-timeRows"></div>
+      </div>
+    </div>
+
+  </div>
+  <div id="ds6-legend">
+    <span style="font-size:9.5px;font-weight:700;color:var(--ink3);margin-right:2px">LEGEND:</span>
+    <span class="le"><span class="le-tri" style="color:var(--cfat)"></span>Plan FAT</span>
+    <span class="le"><span class="le-tri" style="color:#2D6A2D"></span>Actual FAT</span>
+    <span class="le"><span class="le-tri" style="color:var(--cpo)"></span>PO Date</span>
+    <span class="le"><span class="le-tri" style="color:var(--cdel)"></span>Plan Delivery</span>
+    <span class="le"><span class="le-tri" style="color:var(--csite)"></span>Plan @Site</span>
+    <span class="le"><span class="le-dot" style="color:var(--cact)"></span>Actual Del.</span>
+    <span class="le"><span class="le-dot" style="color:var(--gold)"></span>Actual @Site</span>
+    <span class="le"><span class="le-tri" style="color:var(--cfore)"></span>Forecast</span>
+    <span class="le"><span class="le-line"></span>Today</span>
+    <span class="le" style="margin-left:auto;font-size:9px;color:var(--ink3)">✎ Click row to edit dates</span>
+  </div>
+</div>
+</div><!-- /layout -->
+
+            </div>
+
+            <!-- DS6 Stats (original schedule stats retained) -->
             <div class="stats-grid" style="margin-top: 1.5rem;">
-                <div class="stat-card">
-                    <div class="stat-card-content">
-                        <div>
-                            <div class="stat-label">Total Packages</div>
-                            <div class="stat-value" id="schedTotalPackages">0</div>
-                        </div>
-                        <div class="stat-icon blue">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-content">
-                        <div>
-                            <div class="stat-label">In Transit</div>
-                            <div class="stat-value" id="schedInTransit">0</div>
-                        </div>
-                        <div class="stat-icon teal">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-content">
-                        <div>
-                            <div class="stat-label">On Site</div>
-                            <div class="stat-value" id="schedOnSite">0</div>
-                        </div>
-                        <div class="stat-icon emerald">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-content">
-                        <div>
-                            <div class="stat-label">Delayed</div>
-                            <div class="stat-value" id="schedDelayed">0</div>
-                        </div>
-                        <div class="stat-icon red">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                    </div>
-                </div>
+                <div class="stat-card"><div class="stat-card-content"><div><div class="stat-label">Total Packages</div><div class="stat-value" id="schedTotalPackages">0</div></div><div class="stat-icon blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div></div></div>
+                <div class="stat-card"><div class="stat-card-content"><div><div class="stat-label">In Transit</div><div class="stat-value" id="schedInTransit">0</div></div><div class="stat-icon teal"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div></div></div>
+                <div class="stat-card"><div class="stat-card-content"><div><div class="stat-label">On Site</div><div class="stat-value" id="schedOnSite">0</div></div><div class="stat-icon emerald"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div></div>
+                <div class="stat-card"><div class="stat-card-content"><div><div class="stat-label">Delayed</div><div class="stat-value" id="schedDelayed">0</div></div><div class="stat-icon red"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div></div></div>
             </div>
         </div>
 
-        <!-- ========== INQUIRY PLAN TAB ========== -->
+
+                <!-- ========== INQUIRY PLAN TAB ========== -->
         <div id="inquiry" class="tab-content">
             <!-- Print-only header for inquiry -->
             <div class="print-header print-header-inquiry" style="display: none;">
@@ -7580,5 +7906,677 @@ function afterProjectSave(proj) {
         </div>
     </div>
     <div class="ie-toast" id="ieToast"></div>
+
+<script>
+
+// ===== DS6: DELIVERY SCHEDULE v6.2 (Embedded) =====
+(function(){
+"use strict";
+
+// ── ADAPTER: Convert main app nested package → DS6 flat format ──
+function adaptPkg(p) {
+    const m = p.manufacture || {};
+    const d = p.delivery || {};
+    const ms = p.milestones || {};
+    const poActual = !!(ms.issuePO && ms.issuePO.actual);
+    const poDate = poActual ? ms.issuePO.actual : (ms.issuePO ? ms.issuePO.plan : '');
+    return {
+        id: p.id,
+        _ref: p, // keep reference to original
+        name: p.packageName || '',
+        discipline: p.discipline || '',
+        area: p.area || '',
+        vendor: p.vendorName || '',
+        coo: p.coo || '',
+        initiation: p.initiation || '',
+        rfqNo: p.rfqNo || '',
+        incoterm: d.incoterm || '',
+        location: d.deliveryLocation || '',
+        poDate: poDate,
+        poActual: poActual,
+        mfgStart: m.planStart || '',
+        mfgEnd: m.planFinish || '',
+        mfgActualStart: m.actualStart || '',
+        mfgPct: m.actualProgress || 0,
+        mfgPlanPct: m.planProgress || 0,
+        fatPlan: m.planFAT || '',
+        fatActual: m.actualFAT || '',
+        fatResult: m.fatResult || '',
+        delPlan: d.planDelivery100 || '',
+        delActual: d.actualDelivery100 || '',
+        sitePlan: d.planMaterialAtSite100 || '',
+        siteActual: d.actualMaterialAtSite100 || '',
+        shipPct: d.shippingStatus || 0,
+        shipPlanPct: d.shippingStatusPlan || 0,
+        remark: m.remark || ''
+    };
+}
+
+// ── Write DS6 edits back to main app nested structure ──
+function writeBack(dsP) {
+    var pkg = dsP._ref;
+    if (!pkg) { pkg = (typeof packages !== 'undefined' ? packages : []).find(function(x){return x.id === dsP.id;}); }
+    if (!pkg) return;
+    if (!pkg.manufacture) pkg.manufacture = {};
+    if (!pkg.delivery) pkg.delivery = {};
+    if (!pkg.milestones) pkg.milestones = {};
+    if (!pkg.milestones.issuePO) pkg.milestones.issuePO = {};
+
+    pkg.manufacture.planStart = dsP.mfgStart;
+    pkg.manufacture.planFinish = dsP.mfgEnd;
+    pkg.manufacture.actualProgress = dsP.mfgPct;
+    pkg.manufacture.planProgress = dsP.mfgPlanPct;
+    pkg.manufacture.planFAT = dsP.fatPlan;
+    pkg.manufacture.actualFAT = dsP.fatActual;
+    pkg.manufacture.fatResult = dsP.fatResult;
+    pkg.manufacture.remark = dsP.remark;
+    pkg.delivery.incoterm = dsP.incoterm;
+    pkg.delivery.deliveryLocation = dsP.location;
+    pkg.delivery.planDelivery100 = dsP.delPlan;
+    pkg.delivery.actualDelivery100 = dsP.delActual;
+    pkg.delivery.planMaterialAtSite100 = dsP.sitePlan;
+    pkg.delivery.actualMaterialAtSite100 = dsP.siteActual;
+    pkg.delivery.shippingStatus = dsP.shipPct;
+    if (dsP.poActual && dsP.poDate) {
+        pkg.milestones.issuePO.actual = dsP.poDate;
+    }
+    pkg.vendorName = dsP.vendor;
+
+    // Trigger main app save + sync
+    if (typeof saveAllData === 'function') saveAllData();
+    if (typeof addActivityLog === 'function') addActivityLog('UPDATE', 'package', pkg.packageName, 'DS6 Schedule edit');
+    if (typeof afterPackageSave === 'function') afterPackageSave(pkg);
+    if (typeof renderAll === 'function') renderAll();
+}
+
+// ── Get current packages from main app ──
+function getDS6Packages() {
+    var pkgs = (typeof packages !== 'undefined') ? packages : [];
+    var selProj = (typeof selectedProject !== 'undefined') ? selectedProject : null;
+    if (selProj) pkgs = pkgs.filter(function(p){ return p.projectId === selProj; });
+    return pkgs.map(adaptPkg);
+}
+
+// ── DS6 Engine (adapted from standalone) ──
+var PKG = [];
+var TODAY = new Date().toISOString().split('T')[0];
+var TODAY_D = new Date(TODAY);
+var TL_S = new Date('2024-11-01');
+var TL_E = new Date('2026-10-01');
+var DPX = 3.2;
+var TOTAL_PX = Math.ceil((TL_E - TL_S)/86400000) * DPX;
+var TODAY_PX = Math.round((TODAY_D - TL_S)/86400000) * DPX;
+
+var layers = new Set(['fat','po','del','site','actual','forecast']);
+var discF='all', stF=new Set(['ongoing']), pendingImport=null, editId=null;
+var _scrollBound = false;
+
+// Helper functions (same as standalone)
+var px = function(s) { if(!s) return null; var d = new Date(s); if(isNaN(d)) return null; return Math.round((d - TL_S)/86400000) * DPX; };
+var fmt = function(s) { if(!s) return '—'; var d = new Date(s); if(isNaN(d)) return '—'; return d.getDate().toString().padStart(2,'0') + '-' + d.toLocaleString('en',{month:'short'}) + '-' + String(d.getFullYear()).slice(-2); };
+var fmtS = function(s) { if(!s) return '—'; var d = new Date(s); if(isNaN(d)) return '—'; return d.getDate().toString().padStart(2,'0') + '-' + d.toLocaleString('en',{month:'short'}); };
+var mfgCol = function(p) { return p>=100?'#2D2D2A':p>=70?'#4A4844':p>=40?'#7A7060':'#9A7060'; };
+
+function pkgSt(p){
+  if(p.siteActual) return 'onsite';
+  if(p.delActual)  return 'delivered';
+  if(p.shipPct>0)  return 'shipping';
+  if(p.mfgPct>0)   return 'mfg';
+  if(p.delPlan && p.delPlan < TODAY && !p.delActual) return 'late';
+  if(!p.poActual)  return 'po_nyi';
+  return 'eng_process';
+}
+function badge(p){
+  var s=pkgSt(p), L=p.delPlan&&p.delPlan<TODAY&&!p.delActual;
+  var M={onsite:'<span class="badge bd-site">✓ On Site</span>',
+    delivered:'<span class="badge bd-del">✓ Delivered</span>',
+    shipping:'<span class="badge bd-ship">↗ Ship '+p.shipPct+'%</span>',
+    mfg:'<span class="badge bd-mfg">◐ In Mfg</span>',
+    late:'<span class="badge bd-late">⚠ Delayed</span>',
+    po_nyi:'<span class="badge bd-ponyi">◇ PO n/y Issued</span>',
+    eng_process:'<span class="badge bd-eng">⊡ Eng. Process</span>'};
+  var b=M[s]||'';
+  if(L&&s!=='late'&&s!=='onsite'&&s!=='delivered') b+=' <span class="badge bd-late">⚠ Del.Late</span>';
+  return b;
+}
+function fcDel(p){
+  if(p.delActual||!p.delPlan) return null;
+  if(new Date(p.delPlan)>=TODAY_D) return null;
+  if(p.mfgPct>=100) return null;
+  var mD = p.mfgEnd&&p.mfgStart ? Math.ceil((new Date(p.mfgEnd)-new Date(p.mfgStart))/86400000) : 120;
+  var rem = Math.round((1-p.mfgPct/100)*mD)+35;
+  var fc=new Date(TODAY_D); fc.setDate(fc.getDate()+rem);
+  return fc.toISOString().split('T')[0];
+}
+
+// Month headers
+var MONTHS = (function() {
+  var m=[];
+  var c=new Date(TL_S.getFullYear(), TL_S.getMonth(), 1);
+  while(c < TL_E){
+    var days=new Date(c.getFullYear(),c.getMonth()+1,0).getDate();
+    var d0=c<TL_S?TL_S:new Date(c);
+    m.push({lbl:c.toLocaleString('en',{month:'short'}),yr:c.getFullYear(),
+      spx:Math.round((d0-TL_S)/86400000)*DPX, wpx:days*DPX});
+    c.setMonth(c.getMonth()+1);
+  }
+  return m;
+})();
+
+function buildTimeHead(){
+  var inner = document.getElementById('ds6-timeHeadInner');
+  if(!inner) return;
+  var h = '<div style="display:flex;height:28px">' +
+    MONTHS.map(function(m){return '<div class="thm" style="width:'+m.wpx+'px;min-width:'+m.wpx+'px">'+m.lbl+'<br><span style="font-size:7px;opacity:.5">'+m.yr+'</span></div>';}).join('') +
+    '</div>';
+  h += '<div style="display:flex;position:relative;height:18px;background:#2D2D2A;border-bottom:1px solid var(--gold)">' +
+    MONTHS.map(function(m){return '<div style="width:'+m.wpx+'px;min-width:'+m.wpx+'px;flex-shrink:0;border-right:1px solid #2A2A28;height:18px"></div>';}).join('') +
+    '<div style="position:absolute;left:'+TODAY_PX+'px;top:0;bottom:0;width:1.5px;background:var(--gold)"></div>' +
+    '<div style="position:absolute;left:'+(TODAY_PX-12)+'px;top:2px;font-size:7px;font-weight:700;background:var(--gold);color:var(--ink);padding:1px 2px;border-radius:2px;white-space:nowrap">TODAY</div></div>';
+  inner.innerHTML = h;
+}
+
+function filtered(){
+  var list = PKG.slice();
+  if(discF!=='all') list=list.filter(function(p){return p.discipline===discF;});
+  var ALL_ST = new Set(['ongoing','onsite','delivered','shipping','mfg','eng_process','po_nyi','late']);
+  var stAll = stF.size === 0 || stF.size === ALL_ST.size;
+  if(!stAll){
+    list = list.filter(function(p) {
+      var s = pkgSt(p);
+      if(stF.has(s)) return true;
+      if(stF.has('ongoing') && s !== 'onsite') return true;
+      return false;
+    });
+  }
+  var sortEl = document.getElementById('ds6-sortSel');
+  var s = sortEl ? sortEl.value : 'del';
+  list.sort(function(a,b){
+    if(s==='del')  return (a.delPlan||'Z').localeCompare(b.delPlan||'Z');
+    if(s==='site') return (a.sitePlan||'Z').localeCompare(b.sitePlan||'Z');
+    if(s==='disc') return (a.discipline||'').localeCompare(b.discipline||'') || (a.delPlan||'Z').localeCompare(b.delPlan||'Z');
+    if(s==='mfg')  return b.mfgPct-a.mfgPct;
+    if(s==='name') return a.name.localeCompare(b.name);
+    return 0;
+  });
+  return list;
+}
+
+function render(){
+  // Refresh data from main app
+  PKG = getDS6Packages();
+  TODAY = new Date().toISOString().split('T')[0];
+  TODAY_D = new Date(TODAY);
+  
+  // Update cutoff
+  var cutEl = document.getElementById('ds6-cutoff');
+  if(cutEl) cutEl.textContent = fmt(TODAY);
+
+  var list=filtered();
+  buildTimeHead();
+  updateStats(list);
+  var cntEl = document.getElementById('ds6-pkgCnt');
+  if(cntEl) cntEl.innerHTML='<b style="color:var(--gold)">'+list.length+'</b>/'+PKG.length+' Packages';
+
+  // Update main app stat cards
+  updateMainStats();
+
+  if(!list.length){
+    var lr = document.getElementById('ds6-leftRows');
+    if(lr) lr.innerHTML='<div style="padding:40px;text-align:center;color:var(--ink3)">No packages match filters</div>';
+    var tr = document.getElementById('ds6-timeRows');
+    if(tr) tr.innerHTML='';
+    return;
+  }
+
+  var byDisc = (document.getElementById('ds6-sortSel')||{}).value==='disc';
+  var lastDisc=null, lHTML='', tHTML='';
+
+  var MK=function(x,y,col,lbl,tip){
+    if(x===null) return '';
+    return '<div class="mk" style="left:'+x+'px;top:'+y+'px" title="'+(tip||'')+'"><div class="mk-tri" style="color:'+col+'"></div>'+(lbl?'<div class="mk-lbl" style="color:'+col+'">'+lbl+'</div>':'')+'</div>';
+  };
+  var MKA=function(x,y,col,tip){
+    if(x===null) return '';
+    return '<div class="mk" style="left:'+x+'px;top:'+(y+2)+'px" title="'+(tip||'')+'"><div class="mk-dot" style="color:'+col+'"></div></div>';
+  };
+  var MKpct=function(x,y,col,lbl,pct,tip){
+    if(x===null) return '';
+    return '<div class="mk" style="left:'+x+'px;top:'+y+'px" title="'+(tip||'')+'"><div class="mk-tri" style="color:'+col+'"></div><div class="mk-lbl" style="color:'+col+'">'+lbl+'</div><div class="mk-pct" style="color:'+col+'">'+pct+'%</div></div>';
+  };
+
+  var y1=2, y2=13, y3=24, y4=35, y5=46;
+
+  list.forEach(function(p,idx){
+    var done=pkgSt(p)==='onsite';
+    if(byDisc && p.discipline!==lastDisc){
+      var sep='<div class="disc-sep">'+p.discipline+'</div>';
+      lHTML+=sep;
+      tHTML+='<div class="disc-sep" style="color:var(--gold);opacity:0.5;font-size:8px">'+p.discipline+'</div>';
+      lastDisc=p.discipline;
+    }
+    var pFP=px(p.fatPlan),pFA=px(p.fatActual);
+    var pPO=px(p.poDate);
+    var pDP=px(p.delPlan),pDA=px(p.delActual);
+    var pSP=px(p.sitePlan),pSA=px(p.siteActual);
+    var pFC=px(fcDel(p));
+
+    lHTML+='<div class="g-row '+(done?'r-done':'')+'" style="cursor:pointer" data-pkgid="'+p.id+'" title="Click to edit">';
+    lHTML+='<div class="c-pk"><div class="c-no">#'+String(idx+1).padStart(2,'0')+' · '+p.discipline+' · '+p.area+'</div>';
+    lHTML+='<div class="c-nm" title="'+p.name+'">'+(p.name.length>34?p.name.slice(0,33)+'…':p.name)+'</div>';
+    lHTML+='<div class="c-sub">'+(p.vendor||'—')+' · '+(p.coo||'—')+'</div>';
+    lHTML+='<div>'+badge(p)+'</div></div>';
+    lHTML+='<div class="c-in"><div class="ir"><span class="ik">Incoterm</span><span class="iv">'+(p.incoterm||'—')+'</span></div>';
+    lHTML+='<div class="ir"><span class="ik">PO</span><span class="iv">'+fmtS(p.poDate)+(p.poActual?'':' ▹')+'</span></div>';
+    lHTML+='<div class="ir"><span class="ik">Del Plan</span><span class="iv">'+fmtS(p.delPlan)+'</span></div>';
+    lHTML+='<div class="ir"><span class="ik">@Site</span><span class="iv">'+fmtS(p.sitePlan)+'</span></div></div>';
+    lHTML+='<div class="c-mf"><div class="mn"><span class="mp">Pl '+p.mfgPlanPct+'%</span><span class="ma">'+p.mfgPct+'%</span></div>';
+    lHTML+='<div class="pb"><div class="pbf" style="width:'+p.mfgPct+'%;background:'+mfgCol(p.mfgPct)+'"></div></div>';
+    lHTML+='<div class="ft '+(p.fatActual&&(p.fatResult||'').toLowerCase().indexOf('pass')>=0?'ft-ok':'')+'">';
+    lHTML+=(p.fatActual?'FAT✓ '+fmt(p.fatActual):(p.fatPlan?'FAT: '+fmt(p.fatPlan):'—'))+'</div>';
+    if(p.shipPct>0) lHTML+='<div class="ft">Ship:'+p.shipPct+'%</div>';
+    lHTML+='</div></div>';
+
+    tHTML+='<div class="t-row '+(done?'r-done':'')+'">';
+    tHTML+='<div class="t-inner" style="width:'+TOTAL_PX+'px">';
+    tHTML+=MONTHS.map(function(m,mi){return '<div class="gl" style="left:'+m.spx+'px;width:'+m.wpx+'px;background:'+(mi%2?'#FAFAF8':'#F5F4F0')+'"></div>';}).join('');
+    tHTML+='<div class="tday" style="left:'+TODAY_PX+'px"></div>';
+    if(layers.has('fat')){ tHTML+=MK(pFP,y1,'var(--cfat)',fmtS(p.fatPlan),'Plan FAT: '+fmt(p.fatPlan)); if(pFA!==null) tHTML+=MK(pFA,y1,'#2D6A2D',fmtS(p.fatActual),'Actual FAT: '+fmt(p.fatActual)+' — '+(p.fatResult||'')); }
+    if(layers.has('po')&&pPO!==null) tHTML+=MKpct(pPO,y2,'var(--cpo)',fmtS(p.poDate),p.mfgPct,'PO Date: '+fmt(p.poDate)+(p.poActual?' (Issued)':' (Plan)')+'\nMfg: '+p.mfgPct+'%');
+    if(layers.has('del')) tHTML+=MK(pDP,y3,'var(--cdel)',fmtS(p.delPlan),'Plan Delivery: '+fmt(p.delPlan)+'\nIncoterm: '+p.incoterm+'\nLoc: '+p.location);
+    if(layers.has('actual')&&pDA!==null) tHTML+=MKA(pDA,y3,'var(--cact)','Actual Delivery: '+fmt(p.delActual));
+    if(layers.has('site')) tHTML+=MK(pSP,y4,'var(--csite)',fmtS(p.sitePlan),'Plan @Site: '+fmt(p.sitePlan));
+    if(layers.has('actual')&&pSA!==null) tHTML+=MKA(pSA,y4,'var(--gold)','Actual @Site: '+fmt(p.siteActual));
+    if(layers.has('forecast')&&pFC!==null) tHTML+=MK(pFC,y5,'var(--cfore)',fmtS(fcDel(p)),'Forecast Delivery: '+fmt(fcDel(p))+'\nEst. dari Mfg '+p.mfgPct+'%');
+    tHTML+='</div></div>';
+  });
+
+  var lr2 = document.getElementById('ds6-leftRows');
+  if(lr2) lr2.innerHTML = lHTML;
+  var tr2 = document.getElementById('ds6-timeRows');
+  if(tr2) tr2.innerHTML = tHTML;
+  bindScroll();
+}
+
+function bindScroll(){
+  if(_scrollBound) return;
+  var tb = document.getElementById('ds6-timeBody');
+  var lb = document.getElementById('ds6-leftBody');
+  var th = document.getElementById('ds6-timeHead');
+  if(!tb||!lb||!th) return;
+  var syncing=false;
+  tb.addEventListener('scroll',function(){
+    if(syncing) return; syncing=true;
+    requestAnimationFrame(function(){ lb.scrollTop=tb.scrollTop; th.scrollLeft=tb.scrollLeft; syncing=false; });
+  },{passive:true});
+  lb.addEventListener('scroll',function(){
+    if(syncing) return; syncing=true;
+    requestAnimationFrame(function(){ tb.scrollTop=lb.scrollTop; syncing=false; });
+  },{passive:true});
+  lb.addEventListener('wheel',function(e){ e.preventDefault(); tb.scrollTop+=e.deltaY; tb.scrollLeft+=e.deltaX; },{passive:false});
+  _scrollBound = true;
+}
+
+function updateStats(list){
+  var cnt=function(s){return list.filter(function(p){return pkgSt(p)===s;}).length;};
+  var ongoing=list.filter(function(p){return pkgSt(p)!=='onsite';}).length;
+  var late=list.filter(function(p){return p.delPlan&&p.delPlan<TODAY&&!p.delActual;}).length;
+  var avg=list.length?Math.round(list.reduce(function(a,p){return a+p.mfgPct;},0)/list.length):0;
+  var el = document.getElementById('ds6-statList');
+  if(!el) return;
+  el.innerHTML=
+    '<div class="srow" style="background:#E8E4DC"><span style="font-weight:600">On Going</span><span class="sv">'+ongoing+'</span></div>'+
+    '<div class="srow"><span>On Site</span><span class="sv">'+cnt('onsite')+'</span></div>'+
+    '<div class="srow"><span>Delivered</span><span class="sv">'+cnt('delivered')+'</span></div>'+
+    '<div class="srow"><span>Shipping</span><span class="sv">'+cnt('shipping')+'</span></div>'+
+    '<div class="srow"><span>In Mfg</span><span class="sv">'+cnt('mfg')+'</span></div>'+
+    '<div class="srow"><span>Eng. Process</span><span class="sv">'+cnt('eng_process')+'</span></div>'+
+    '<div class="srow"><span>PO n/y Issued</span><span class="sv">'+cnt('po_nyi')+'</span></div>'+
+    '<div class="srow '+(late>0?'w':'')+'"><span>Del. Delayed</span><span class="sv">'+late+'</span></div>'+
+    '<div class="srow"><span>Avg Mfg%</span><span class="sv">'+avg+'%</span></div>';
+}
+
+function updateMainStats(){
+  // Update the stat cards at the bottom (same IDs as original)
+  var all = PKG;
+  var el1 = document.getElementById('schedTotalPackages');
+  var el2 = document.getElementById('schedInTransit');
+  var el3 = document.getElementById('schedOnSite');
+  var el4 = document.getElementById('schedDelayed');
+  if(el1) el1.textContent = all.length;
+  if(el2) el2.textContent = all.filter(function(p){return p.shipPct>0 && !p.siteActual;}).length;
+  if(el3) el3.textContent = all.filter(function(p){return !!p.siteActual;}).length;
+  if(el4) el4.textContent = all.filter(function(p){return p.delPlan && p.delPlan<TODAY && !p.delActual;}).length;
+}
+
+// ── EVENTS (use ds6- prefixed IDs) ──
+document.addEventListener('click', function(e){
+  // Discipline chips
+  var chip = e.target.closest('#ds6-discChips .chip');
+  if(chip){
+    document.querySelectorAll('#ds6-discChips .chip').forEach(function(x){x.classList.remove('on','gon');});
+    chip.classList.add('on','gon'); discF=chip.dataset.v; render();
+    return;
+  }
+  // Status multi-select
+  var stItem = e.target.closest('#ds6-stList .lyr');
+  if(stItem){
+    var s2=stItem.dataset.s;
+    if(stF.has(s2)){stF.delete(s2);stItem.classList.remove('on');stItem.querySelector('.lck').textContent='';}
+    else{stF.add(s2);stItem.classList.add('on');stItem.querySelector('.lck').textContent='✓';}
+    render(); return;
+  }
+  // Layer toggle
+  var lyrItem = e.target.closest('#ds6-lyrList .lyr');
+  if(lyrItem){
+    var l2=lyrItem.dataset.l;
+    if(layers.has(l2)){layers.delete(l2);lyrItem.classList.remove('on');lyrItem.querySelector('.lck').textContent='';}
+    else{layers.add(l2);lyrItem.classList.add('on');lyrItem.querySelector('.lck').textContent='✓';}
+    render(); return;
+  }
+  // Row click → edit
+  var row = e.target.closest('#ds6-leftBody [data-pkgid]');
+  if(row){
+    var rawId = row.dataset.pkgid;
+    var p = PKG.find(function(x){return String(x.id)===String(rawId);});
+    if(p) openEdit(p);
+    return;
+  }
+});
+
+// Tooltip
+document.addEventListener('mousemove',function(e){
+  var tip=document.getElementById('ds6-tip');
+  if(!tip) return;
+  var el=e.target.closest('[title]');
+  if(el&&el.title&&(el.closest('#ds6-timeRows')||el.closest('#ds6-leftRows'))){
+    if(!el.dataset.tip){el.dataset.tip=el.title;el.title='';}
+    tip.style.display='block';
+    var tx=Math.min(e.clientX+14, window.innerWidth-290);
+    var ty=Math.max(e.clientY-10, 4);
+    tip.style.left=tx+'px'; tip.style.top=ty+'px';
+    tip.textContent=el.dataset.tip;
+  } else {
+    tip.style.display='none';
+    if(el&&el.dataset.tip){el.title=el.dataset.tip;delete el.dataset.tip;}
+  }
+});
+
+// ── EDIT MODAL ──
+function openEdit(p){
+  editId = p.id;
+  document.getElementById('ds6-editSub').textContent=p.name+' · '+p.discipline+' · '+(p.vendor||'—');
+  document.getElementById('ds6-editGrid').innerHTML=
+    '<div class="e-sep">Manufacturing Progress</div>'+
+    '<div class="e-grp"><label class="e-lbl">Mfg Plan Start</label><input class="e-inp" type="date" id="ds6_e_ms" value="'+(p.mfgStart||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Mfg Plan Finish</label><input class="e-inp" type="date" id="ds6_e_me" value="'+(p.mfgEnd||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Mfg Actual Progress (%)</label><input class="e-inp" type="number" id="ds6_e_mp" min="0" max="100" value="'+(p.mfgPct||0)+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Mfg Plan Progress (%)</label><input class="e-inp" type="number" id="ds6_e_mpp" min="0" max="100" value="'+(p.mfgPlanPct||0)+'"></div>'+
+    '<div class="e-sep">FAT</div>'+
+    '<div class="e-grp"><label class="e-lbl">Plan FAT</label><input class="e-inp" type="date" id="ds6_e_fp" value="'+(p.fatPlan||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Actual FAT</label><input class="e-inp" type="date" id="ds6_e_fa" value="'+(p.fatActual||'')+'"></div>'+
+    '<div class="e-grp full"><label class="e-lbl">FAT Result</label><select class="e-inp" id="ds6_e_fr"><option value="">—</option><option '+(p.fatResult==='Passed'?'selected':'')+'>Passed</option><option '+(p.fatResult==='Passed with Remarks'?'selected':'')+'>Passed with Remarks</option><option '+(p.fatResult==='Failed'?'selected':'')+'>Failed</option></select></div>'+
+    '<div class="e-sep">Delivery & @Site</div>'+
+    '<div class="e-grp"><label class="e-lbl">Plan Delivery 100%</label><input class="e-inp" type="date" id="ds6_e_dp" value="'+(p.delPlan||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Actual Delivery</label><input class="e-inp" type="date" id="ds6_e_da" value="'+(p.delActual||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Plan @Site 100%</label><input class="e-inp" type="date" id="ds6_e_sp" value="'+(p.sitePlan||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Actual @Site</label><input class="e-inp" type="date" id="ds6_e_sa" value="'+(p.siteActual||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Shipping Actual (%)</label><input class="e-inp" type="number" id="ds6_e_shp" min="0" max="100" value="'+(p.shipPct||0)+'"></div>'+
+    '<div class="e-sep">Vendor / Info</div>'+
+    '<div class="e-grp"><label class="e-lbl">Vendor</label><input class="e-inp" type="text" id="ds6_e_vn" value="'+(p.vendor||'')+'"></div>'+
+    '<div class="e-grp"><label class="e-lbl">Incoterm</label><input class="e-inp" type="text" id="ds6_e_it" value="'+(p.incoterm||'')+'"></div>'+
+    '<div class="e-grp full"><label class="e-lbl">Location</label><input class="e-inp" type="text" id="ds6_e_loc" value="'+(p.location||'')+'"></div>'+
+    '<div class="e-sep">Remark</div>'+
+    '<div class="e-grp full"><label class="e-lbl">Remark / Notes</label><textarea class="e-inp" id="ds6_e_rem" rows="3" style="resize:vertical;font-family:inherit">'+(p.remark||'')+'</textarea></div>';
+  document.getElementById('ds6-editModal').classList.add('show');
+}
+function closeEdit(){ document.getElementById('ds6-editModal').classList.remove('show'); editId=null; }
+function saveEdit(){
+  var p=PKG.find(function(x){return String(x.id)===String(editId);}); if(!p) return;
+  var g=function(id){return (document.getElementById(id)||{}).value||'';};
+  var gn=function(id){return parseInt((document.getElementById(id)||{}).value)||0;};
+  p.mfgStart=g('ds6_e_ms'); p.mfgEnd=g('ds6_e_me');
+  p.mfgPct=gn('ds6_e_mp'); p.mfgPlanPct=gn('ds6_e_mpp');
+  p.fatPlan=g('ds6_e_fp'); p.fatActual=g('ds6_e_fa'); p.fatResult=g('ds6_e_fr');
+  p.delPlan=g('ds6_e_dp'); p.delActual=g('ds6_e_da');
+  p.sitePlan=g('ds6_e_sp'); p.siteActual=g('ds6_e_sa');
+  p.shipPct=gn('ds6_e_shp');
+  p.vendor=g('ds6_e_vn'); p.incoterm=g('ds6_e_it'); p.location=g('ds6_e_loc');
+  p.remark=g('ds6_e_rem');
+  // Write back to main app nested structure + trigger sync
+  writeBack(p);
+  closeEdit(); _scrollBound=false; render();
+}
+
+// ── IMPORT (fallback) ──
+function openImport(){ document.getElementById('ds6-importModal').classList.add('show'); }
+function closeImport(){
+  document.getElementById('ds6-importModal').classList.remove('show');
+  var ml=document.getElementById('ds6-mlog'); if(ml){ml.style.display='none';ml.innerHTML='';}
+  var bim=document.getElementById('ds6-bim'); if(bim) bim.disabled=true;
+  pendingImport=null;
+}
+
+// ── PRINT (simplified - opens new window) ──
+function openPrint(){ 
+  var list = filtered();
+  if(!list.length){ alert('No packages to print.'); return; }
+  prAutoRange();
+  updatePrInfo();
+  document.getElementById('ds6-printModal').classList.add('show');
+  ['pr_from','pr_to','pr_paper','pr_rowh','pr_scale','pr_font'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.onchange = updatePrInfo;
+  });
+}
+
+function closePrint(){ document.getElementById('ds6-printModal').classList.remove('show'); }
+
+function prAutoRange(){
+  var list = filtered();
+  var allDates = [];
+  var push = function(s){ if(s){ var d=new Date(s); if(!isNaN(d)) allDates.push(d); }};
+  list.forEach(function(p){
+    if(layers.has('fat'))    { push(p.fatPlan); push(p.fatActual); }
+    if(layers.has('po'))     { push(p.poDate); }
+    if(layers.has('del'))    { push(p.delPlan); push(p.delActual); }
+    if(layers.has('site'))   { push(p.sitePlan); push(p.siteActual); }
+    if(layers.has('actual')) { push(p.delActual); push(p.siteActual); }
+    if(layers.has('forecast')){ var fc=fcDel(p); push(fc); }
+  });
+  push(TODAY);
+  if(!allDates.length) return;
+  var minD = new Date(Math.min.apply(null,allDates));
+  var maxD = new Date(Math.max.apply(null,allDates));
+  minD.setMonth(minD.getMonth()-1);
+  maxD.setMonth(maxD.getMonth()+1);
+  document.getElementById('pr_from').value = minD.getFullYear()+'-'+String(minD.getMonth()+1).padStart(2,'0');
+  document.getElementById('pr_to').value = maxD.getFullYear()+'-'+String(maxD.getMonth()+1).padStart(2,'0');
+  updatePrInfo();
+}
+
+function updatePrInfo(){
+  var from = document.getElementById('pr_from').value;
+  var to = document.getElementById('pr_to').value;
+  var list = filtered();
+  if(!from||!to){ document.getElementById('prPreviewInfo').textContent='Pilih range bulan'; return; }
+  var fp=from.split('-').map(Number), tp=to.split('-').map(Number);
+  var mCount = (tp[0]-fp[0])*12+(tp[1]-fp[1])+1;
+  var scale = parseFloat(document.getElementById('pr_scale').value);
+  var totalDays = mCount * 30.44;
+  var tlWidth = Math.round(totalDays * scale);
+  var paper = document.getElementById('pr_paper').value;
+  var paperW = paper==='A2'?'~594mm':paper==='A3'?'~420mm':'~297mm';
+  document.getElementById('prPreviewInfo').innerHTML =
+    '<b>'+list.length+'</b> packages &nbsp;|&nbsp; <b>'+mCount+'</b> bulan timeline &nbsp;|&nbsp; '+
+    'Timeline width: <b>~'+tlWidth+'px</b> &nbsp;|&nbsp; Paper: <b>'+paper+' Landscape</b> ('+paperW+' wide)';
+}
+
+function execPrint(){
+  var list = filtered();
+  if(!list.length){ alert('No packages to print.'); return; }
+  var fromVal = document.getElementById('pr_from').value;
+  var toVal = document.getElementById('pr_to').value;
+  if(!fromVal||!toVal){ alert('Pilih range bulan dulu.'); return; }
+
+  var fp=fromVal.split('-').map(Number), tp=toVal.split('-').map(Number);
+  var minD = new Date(fp[0], fp[1]-1, 1);
+  var maxD = new Date(tp[0], tp[1], 1);
+
+  var P_DPX = parseFloat(document.getElementById('pr_scale').value);
+  var ROW_H = parseInt(document.getElementById('pr_rowh').value);
+  var FS = parseFloat(document.getElementById('pr_font').value);
+  var paperSize = document.getElementById('pr_paper').value;
+  var paperCSS = paperSize==='A2'?'594mm 420mm landscape':paperSize==='A3'?'420mm 297mm landscape':'297mm 210mm landscape';
+
+  var f7=(7*FS).toFixed(1),f75=(7.5*FS).toFixed(1),f8=(8*FS).toFixed(1),f85=(8.5*FS).toFixed(1);
+  var f9=(9*FS).toFixed(1),f10=(10*FS).toFixed(1),f11=(11*FS).toFixed(1),f13=(13*FS).toFixed(1);
+
+  var pMonths=[],pc=new Date(minD.getFullYear(),minD.getMonth(),1);
+  while(pc<maxD){
+    var days=new Date(pc.getFullYear(),pc.getMonth()+1,0).getDate();
+    pMonths.push({lbl:pc.toLocaleString('en',{month:'short'}),yr:pc.getFullYear(),first:new Date(pc),days:days});
+    pc.setMonth(pc.getMonth()+1);
+  }
+
+  var pTotal=pMonths.reduce(function(a,m){return a+m.days;},0)*P_DPX;
+  var pPx=function(s){if(!s)return null;var d=new Date(s);if(isNaN(d))return null;var v=Math.round((d-minD)/86400000)*P_DPX;return(v<-20||v>pTotal+20)?null:v;};
+  var todayPx=pPx(TODAY);
+
+  var PKG_W=Math.round(240*FS),INFO_W=Math.round(115*FS),MFG_W=Math.round(82*FS);
+  var C={fat:'#5A5A50',fatA:'#2D6A2D',po:'#7A7A70',del:'#404040',site:'#B8A878',actD:'#1A1916',actS:'#B8A878',fore:'#8A6A30',gold:'#B8A878'};
+
+  var fmtP=function(s){if(!s)return'\u2014';var d=new Date(s);return d.getDate().toString().padStart(2,'0')+'-'+d.toLocaleString('en',{month:'short'})+'-'+String(d.getFullYear()).slice(-2);};
+  var fmtPS2=function(s){if(!s)return'';var d=new Date(s);return d.getDate().toString().padStart(2,'0')+'-'+d.toLocaleString('en',{month:'short'});};
+
+  var y1=Math.round(ROW_H*0.05),y2r=Math.round(ROW_H*0.32),y3r=Math.round(ROW_H*0.58);
+  var triSz=Math.max(5,Math.round(4*FS));
+
+  var MKt=function(x,y,col,lbl,tip){if(x===null)return'';return'<div style="position:absolute;left:'+x+'px;top:'+y+'px;transform:translateX(-50%);z-index:6" title="'+(tip||'')+'"><div style="width:0;height:0;border-left:'+triSz+'px solid transparent;border-right:'+triSz+'px solid transparent;border-top:'+(triSz+3)+'px solid '+col+'"></div>'+(lbl?'<div style="font-size:'+f8+'px;font-weight:600;color:'+col+';white-space:nowrap;text-align:center">'+lbl+'</div>':'')+'</div>';};
+  var MKd=function(x,y,col){if(x===null)return'';var dotSz=Math.round(10*FS);return'<div style="position:absolute;left:'+(x-dotSz/2)+'px;top:'+(y+2)+'px;width:'+dotSz+'px;height:'+dotSz+'px;border-radius:50%;background:'+col+';border:1.5px solid #fff;z-index:6"></div>';};
+
+  var lastDisc='',rowsHTML='';
+  list.forEach(function(p,idx){
+    if(p.discipline!==lastDisc){rowsHTML+='<tr class="disc-sep"><td colspan="4">'+p.discipline+'</td></tr>';lastDisc=p.discipline;}
+    var pFP=pPx(p.fatPlan),pFA=pPx(p.fatActual),pPO=pPx(p.poDate);
+    var pDP=pPx(p.delPlan),pDA=pPx(p.delActual);
+    var pSP=pPx(p.sitePlan),pSA=pPx(p.siteActual);
+    var pFC=pPx(fcDel(p));
+    var st=pkgSt(p);
+    var bdColor=st==='onsite'?'#1A1916':st==='delivered'?'#4A4844':st==='mfg'?'#888':st==='late'?'#6A3A3A':st==='eng_process'?'#2D4A6A':st==='po_nyi'?'#7A5A20':'#888';
+    var bdLabel=st==='onsite'?'\u2713 ON SITE':st==='delivered'?'\u2713 DELIVERED':st==='mfg'?'IN MFG':st==='late'?'DELAYED':st==='eng_process'?'ENG. PROCESS':st==='po_nyi'?'PO N/Y ISSUED':'\u2014';
+
+    rowsHTML+='<tr style="border-bottom:1px solid #E0DDD5;height:'+ROW_H+'px">';
+    rowsHTML+='<td style="width:'+PKG_W+'px;padding:4px 7px;vertical-align:middle;border-right:1px solid #C8C4BA">';
+    rowsHTML+='<div style="font-size:'+f85+'px;color:#8A8780;font-weight:700">#'+String(idx+1).padStart(2,'0')+' \u00b7 '+p.discipline+'</div>';
+    rowsHTML+='<div style="font-size:'+f11+'px;font-weight:700;line-height:1.25;color:#1A1916">'+(p.name.length>40?p.name.slice(0,39)+'\u2026':p.name)+'</div>';
+    rowsHTML+='<div style="font-size:'+f85+'px;color:#8A8780">'+(p.vendor||'\u2014')+'</div>';
+    rowsHTML+='<span style="font-size:'+f75+'px;font-weight:700;text-transform:uppercase;padding:1.5px 5px;border-radius:2px;background:'+bdColor+';color:#fff">'+bdLabel+'</span></td>';
+    rowsHTML+='<td style="width:'+INFO_W+'px;padding:3px 5px;font-size:'+f9+'px;vertical-align:middle;border-right:1px solid #DDD;background:#FAFAF8">';
+    rowsHTML+='<div style="display:flex;justify-content:space-between"><span style="color:#888">Inco</span><span style="font-weight:600">'+(p.incoterm||'\u2014')+'</span></div>';
+    rowsHTML+='<div style="display:flex;justify-content:space-between"><span style="color:#888">PO</span><span style="font-weight:600">'+fmtPS2(p.poDate)+'</span></div>';
+    rowsHTML+='<div style="display:flex;justify-content:space-between"><span style="color:#888">Del</span><span style="font-weight:600">'+fmtPS2(p.delPlan)+'</span></div>';
+    rowsHTML+='<div style="display:flex;justify-content:space-between"><span style="color:#888">@Site</span><span style="font-weight:600">'+fmtPS2(p.sitePlan)+'</span></div></td>';
+    rowsHTML+='<td style="width:'+MFG_W+'px;padding:3px 5px;vertical-align:middle;border-right:1px solid #DDD;background:#FAFAF8">';
+    rowsHTML+='<div style="display:flex;justify-content:space-between;font-size:'+f9+'px"><span style="color:#888">Pl '+p.mfgPlanPct+'%</span><span style="font-weight:700">'+p.mfgPct+'%</span></div>';
+    rowsHTML+='<div style="height:'+Math.round(5*FS)+'px;background:#DDD;border-radius:2px;margin:2px 0;overflow:hidden"><div style="width:'+p.mfgPct+'%;height:100%;background:'+(p.mfgPct>=100?'#2D2D2A':p.mfgPct>=70?'#4A4844':'#7A7060')+';border-radius:2px"></div></div>';
+    var fatColor=(p.fatActual&&(p.fatResult||'').toLowerCase().indexOf('pass')>=0)?'#2D6A2D':'#888';
+    rowsHTML+='<div style="font-size:'+f8+'px;color:'+fatColor+'">'+(p.fatActual?'FAT\u2713 '+fmtPS2(p.fatActual):(p.fatPlan?'FAT: '+fmtPS2(p.fatPlan):'\u2014'))+'</div></td>';
+    rowsHTML+='<td style="padding:0;position:relative"><div style="position:relative;height:'+ROW_H+'px;width:'+pTotal+'px;overflow:visible">';
+    rowsHTML+=pMonths.map(function(m,mi){var sx=Math.round(((m.first<minD?minD:m.first)-minD)/86400000)*P_DPX;return'<div style="position:absolute;left:'+sx+'px;top:0;width:'+(m.days*P_DPX)+'px;height:100%;background:'+(mi%2?'#FAFAF8':'#F5F4F0')+';border-right:1px solid #DDD"></div>';}).join('');
+    if(todayPx!==null&&todayPx>=0) rowsHTML+='<div style="position:absolute;left:'+todayPx+'px;top:0;bottom:0;width:1.5px;background:'+C.gold+';z-index:8"></div>';
+    if(layers.has('fat')){ rowsHTML+=MKt(pFP,y1,C.fat,fmtPS2(p.fatPlan),'Plan FAT'); if(pFA!==null) rowsHTML+=MKt(pFA,y1,C.fatA,fmtPS2(p.fatActual),'Actual FAT'); }
+    if(layers.has('po')&&pPO!==null) rowsHTML+=MKt(pPO,y2r,C.po,fmtPS2(p.poDate),'PO Date');
+    if(layers.has('del')) rowsHTML+=MKt(pDP,y2r,C.del,fmtPS2(p.delPlan),'Plan Delivery');
+    if(layers.has('actual')&&pDA!==null) rowsHTML+=MKd(pDA,y2r,C.actD);
+    if(layers.has('site')) rowsHTML+=MKt(pSP,y3r,C.site,fmtPS2(p.sitePlan),'Plan @Site');
+    if(layers.has('actual')&&pSA!==null) rowsHTML+=MKd(pSA,y3r,C.site);
+    if(layers.has('forecast')&&pFC!==null) rowsHTML+=MKt(pFC,y2r,C.fore,fmtPS2(fcDel(p)),'Forecast');
+    rowsHTML+='</div></td></tr>';
+  });
+
+  var filterTxt=[
+    discF!=='all'?'Discipline: '+discF:'All Disciplines',
+    stF.size===0||stF.size===6?'All Status':'Status: '+Array.from(stF).join(', '),
+    'Layers: '+Array.from(layers).join(', ')
+  ].join(' | ');
+
+  var legendItems=[];
+  if(layers.has('fat'))     legendItems.push({col:C.fat,lbl:'Plan FAT'},{col:C.fatA,lbl:'Actual FAT'});
+  if(layers.has('po'))      legendItems.push({col:C.po,lbl:'PO Date'});
+  if(layers.has('del'))     legendItems.push({col:C.del,lbl:'Plan Delivery'});
+  if(layers.has('site'))    legendItems.push({col:C.site,lbl:'Plan @Site'});
+  if(layers.has('actual'))  legendItems.push({col:C.actD,lbl:'Actual Del.',dot:true},{col:C.actS,lbl:'Actual @Site',dot:true});
+  if(layers.has('forecast'))legendItems.push({col:C.fore,lbl:'Forecast'});
+  var legendHTML=legendItems.map(function(l){return'<span style="display:inline-flex;align-items:center;gap:3px;margin-right:10px">'+(l.dot?'<span style="width:7px;height:7px;border-radius:50%;background:'+l.col+';display:inline-block"></span>':'<span style="width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid '+l.col+';display:inline-block"></span>')+'<span>'+l.lbl+'</span></span>';}).join('');
+
+  closePrint();
+  var orientLabel=paperSize==='A2'?'A2 (420\u00d7594mm)':paperSize==='A3'?'A3 (297\u00d7420mm)':'A4 (210\u00d7297mm)';
+
+  var monthsHdrHTML=pMonths.map(function(m,mi){return'<div style="width:'+(m.days*P_DPX)+'px;min-width:'+(m.days*P_DPX)+'px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2A2A28;-webkit-print-color-adjust:exact;print-color-adjust:exact"><div style="font-size:'+f9+'px;font-weight:700;color:#B8A878">'+m.lbl+'</div><div style="font-size:'+f7+'px;color:#666">'+m.yr+'</div></div>';}).join('');
+
+  var win=window.open('','_blank');
+  if(!win){alert('Pop-up blocked! Please allow pop-ups for this site.');return;}
+  win.document.write('<!DOCTYPE html><html><head><title>Delivery & Material Schedule \u2014 Salak Unit 7</title><style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:"Segoe UI",Arial,sans-serif;background:#fff;color:#1A1916;font-size:'+f10+'px}'+
+    'table{border-collapse:collapse;table-layout:fixed;width:100%}td,th{vertical-align:middle}'+
+    '.print-page-hdr{display:flex;justify-content:space-between;align-items:flex-end;padding:5mm 8mm 3mm;border-bottom:2px solid #B8A878}'+
+    '.t1{font-size:'+f13+'px;font-weight:700}.t2{font-size:'+f85+'px;color:#8A8780;text-transform:uppercase;letter-spacing:.06em}'+
+    '.meta{text-align:right;font-size:'+f85+'px;color:#8A8780;line-height:1.5}.meta b{color:#1A1916}'+
+    '.filter-row{font-size:'+f85+'px;color:#8A8780;padding:2mm 8mm;background:#F5F4F0;display:flex;justify-content:space-between;align-items:center}'+
+    '.legend-row{font-size:'+f8+'px;color:#666;padding:1mm 8mm;border-bottom:1px solid #E0DDD5;display:flex;align-items:center;gap:4px}'+
+    'thead{display:table-header-group}tbody{display:table-row-group}'+
+    '.disc-sep td{padding:0 8px;height:'+Math.round(24*FS)+'px;line-height:'+Math.round(24*FS)+'px;font-size:'+f9+'px;font-weight:700;color:#B8A878;text-transform:uppercase;letter-spacing:.1em;background:#F0EDE8;border-bottom:1px solid #C8C4BA;border-top:2px solid #C8C4BA}'+
+    '.orient-banner{background:#FFF8E0;border:2px solid #D4B840;border-radius:6px;padding:10px 16px;margin:10px 8mm;display:flex;align-items:center;gap:12px;font-size:12px;color:#5A4A10}'+
+    '.orient-banner .icon{font-size:24px}.orient-banner b{color:#3A2A00}'+
+    '.orient-banner .dismiss{margin-left:auto;cursor:pointer;background:#D4B840;color:#fff;border:none;padding:4px 12px;border-radius:3px;font-size:11px;font-weight:700}'+
+    '@page{size:'+paperCSS+';margin:10mm 6mm 12mm}'+
+    '@media print{.no-print{display:none!important}thead th{-webkit-print-color-adjust:exact;print-color-adjust:exact}.disc-sep td{-webkit-print-color-adjust:exact;print-color-adjust:exact}tbody tr{page-break-inside:avoid}.disc-sep{page-break-inside:avoid;page-break-after:avoid}td div{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body style="width:100%">'+
+    '<div class="orient-banner no-print" id="orientBanner"><span class="icon">\u26a0\ufe0f</span><div><div><b>Pastikan orientasi = LANDSCAPE</b> di Print Dialog</div><div style="font-size:10px;margin-top:2px;color:#7A6A30">Klik <b>More settings</b> \u2192 Layout: <b>Landscape</b> &nbsp;|&nbsp; Paper size: <b>'+orientLabel+'</b> &nbsp;|&nbsp; Margins: <b>None</b> atau <b>Minimum</b></div></div><button class="dismiss" onclick="document.getElementById(\'orientBanner\').style.display=\'none\'">OK, Mengerti</button></div>'+
+    '<div class="print-page-hdr"><div><div class="t1">Delivery &amp; Material Schedule \u2014 '+(discF!=='all'?discF:'All Disciplines')+'</div><div class="t2">Salak Unit 7 Development &nbsp;|&nbsp; Star Energy Geothermal Salak &nbsp;|&nbsp; Gunung Salak, Sukabumi</div></div><div class="meta"><div>Cut-off : <b>'+TODAY+'</b> &nbsp;|&nbsp; <b>'+list.length+'</b> Packages</div><div>Range: <b>'+fmtP(minD.toISOString())+' \u2192 '+fmtP(new Date(maxD.getTime()-86400000).toISOString())+'</b></div></div></div>'+
+    '<div class="filter-row"><span>Filters \u2014 '+filterTxt+'</span><span style="font-size:'+f7+'px">Printed '+new Date().toLocaleString()+'</span></div>'+
+    '<div class="legend-row"><span style="font-weight:700;margin-right:6px">LEGEND:</span>'+legendHTML+'<span style="margin-left:6px;color:#B8A878">\u2502</span><span style="display:inline-flex;align-items:center;gap:3px"><span style="width:2px;height:10px;background:#B8A878;display:inline-block"></span>Today</span></div>'+
+    '<table><thead><tr style="background:#1A1916"><th style="width:'+PKG_W+'px;text-align:left;padding:5px 8px;font-size:'+f10+'px;font-weight:700;color:#fff;border-right:1px solid #333;height:'+Math.round(32*FS)+'px">PACKAGE</th><th style="width:'+INFO_W+'px;text-align:left;padding:5px 6px;font-size:'+f9+'px;font-weight:700;color:#bbb;border-right:1px solid #333">DATES</th><th style="width:'+MFG_W+'px;text-align:center;padding:5px 6px;font-size:'+f9+'px;font-weight:700;color:#bbb;border-right:1px solid #333">MFG%</th><th style="padding:0;border-right:none"><div style="display:flex;height:'+Math.round(32*FS)+'px;overflow:hidden">'+monthsHdrHTML+'</div></th></tr></thead><tbody>'+rowsHTML+'</tbody></table>'+
+    '<script>window.onload=function(){setTimeout(function(){window.print();},3000);};<\/script></body></html>');
+  win.document.close();
+}
+
+// ── EXPOSE to global scope ──
+window.ds6_render = render;
+window.ds6_openImport = openImport;
+window.ds6_openPrint = openPrint;
+window.ds6_closePrint = closePrint;
+window.ds6_prAutoRange = prAutoRange;
+window.ds6_execPrint = execPrint;
+window.ds6_closeEdit = closeEdit;
+window.ds6_saveEdit = saveEdit;
+window.ds6_closeImport = closeImport;
+window.ds6_applyImport = function(){
+  // Import applies data to main app's packages array directly
+  // For now, show notification that import should use main app's import
+  if(typeof showNotification === 'function') showNotification('Use main app Import or Google Sheets sync for data updates', 'info');
+  closeImport();
+};
+
+// Override renderScheduleGantt to call ds6 render
+window.renderScheduleGantt = function(){ render(); };
+window.updateScheduleStats = function(){ /* handled by ds6 render */ };
+window.exportSchedule = function(){ /* TODO: can reuse main app export */ };
+
+// Auto-render when tab becomes visible
+var origSwitchTab = window.switchTab;
+window.switchTab = function(tab){
+  if(origSwitchTab) origSwitchTab(tab);
+  if(tab === 'schedule'){ setTimeout(function(){ _scrollBound=false; render(); },50); }
+};
+
+// Initial render if schedule tab is visible
+setTimeout(function(){ if(document.getElementById('schedule') && document.getElementById('schedule').classList.contains('active')){ render(); } },100);
+
+})();
+
+</script>
 </body>
 </html>
